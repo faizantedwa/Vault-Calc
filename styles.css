@@ -1,325 +1,469 @@
+:root {
+  --bg: #070b14;
+  --card: #111827;
+  --card2: #172033;
+  --blue: #3478ff;
+  --purple: #8b5cf6;
+  --green: #10b981;
+  --red: #ef4055;
+  --orange: #f97316;
+  --white: #ffffff;
+  --grey: #9aa8c4;
+  --num: #182238;
+  --border: #263451;
+}
+
 * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+  background: var(--bg);
+  color: var(--white);
+}
 
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    background: #101114;
-    color: #ffffff;
-
-    overflow: hidden;
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  overflow: hidden;
 }
 
 button,
 input {
-    font-family: inherit;
+  font-family: inherit;
 }
 
 button {
-    border: 0;
-    outline: none;
-    cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
-button:active {
-    transform: scale(0.97);
+#app {
+  width: 100%;
+  max-width: 460px;
+  height: 100%;
+  max-height: 900px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 12px;
+
+  overflow: hidden;
 }
-
-
-/* =========================
-   SCREEN
-========================= */
 
 .screen {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 
-    position: relative;
+  display: flex;
+  flex-direction: column;
 
-    background: #101114;
+  gap: 10px;
+
+  position: relative;
 }
 
 .hidden {
-    display: none !important;
+  display: none !important;
 }
 
 
 /* =========================
-   CALCULATOR
+   TITLE
 ========================= */
 
-.calculator {
-    width: 100%;
-    max-width: 480px;
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
 
-    height: 100%;
+  padding: 5px 0;
 
-    margin: 0 auto;
+  letter-spacing: 0.3px;
 
-    padding:
-        24px
-        16px
-        90px
-        16px;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  flex: 0 0 auto;
 }
+
+
+/* =========================
+   CALCULATOR DISPLAY
+========================= */
 
 .display {
-    width: 100%;
+  width: 100%;
 
-    min-height: 100px;
+  min-height: 75px;
 
-    margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 
-    padding: 20px;
+  padding: 16px 18px;
 
-    border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      #151e31,
+      #0f1627
+    );
 
-    background: #1b1d22;
+  border: 1px solid var(--border);
 
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+  border-radius: 20px;
 
-    text-align: right;
+  font-size: 34px;
+  font-weight: 800;
 
-    font-size: 34px;
-    font-weight: 700;
+  text-align: right;
 
-    overflow-x: auto;
-    white-space: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.25);
+
+  flex: 0 0 auto;
 }
 
-.calculator-grid {
-    width: 100%;
 
-    display: grid;
+/* =========================
+   CALCULATOR KEYS
+========================= */
 
-    grid-template-columns:
-        repeat(4, 1fr);
+.keys {
+  display: grid;
 
-    gap: 10px;
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 9px;
+
+  flex: 1;
+
+  min-height: 0;
 }
 
 .key {
-    min-height: 64px;
+  width: 100%;
+  height: 100%;
 
-    border-radius: 18px;
+  min-height: 45px;
 
-    background: #24272e;
-    color: #ffffff;
+  border: none;
 
-    font-size: 22px;
-    font-weight: 700;
+  border-radius: 18px;
+
+  color: var(--white);
+
+  font-size: 27px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.08s ease,
+    filter 0.08s ease;
 }
 
 .key:active {
-    background: #353941;
+  transform: scale(0.96);
+  filter: brightness(1.25);
 }
 
-.key.equal {
-    background: #3c4658;
+.key.num {
+  background:
+    linear-gradient(
+      145deg,
+      #1c2942,
+      #151e32
+    );
 }
 
-.key.zero {
-    grid-column: span 1;
+.key.op {
+  background:
+    linear-gradient(
+      145deg,
+      #945ff8,
+      #7040d9
+    );
 }
 
-.calculator-actions {
-    margin-top: 14px;
+.key.eq {
+  background:
+    linear-gradient(
+      145deg,
+      #18c995,
+      #07966f
+    );
 }
 
-.secondary-button {
-    width: 100%;
-
-    min-height: 48px;
-
-    padding: 10px 16px;
-
-    border-radius: 14px;
-
-    background: #292c33;
-    color: #ffffff;
-
-    font-weight: 700;
+.key.clr {
+  background:
+    linear-gradient(
+      145deg,
+      #f05266,
+      #c92f48
+    );
 }
 
-
-/* =========================
-   SMALL VAULT BUTTON
-========================= */
-
-.small-vault-button {
-    position: absolute;
-
-    right: 12px;
-    bottom: 12px;
-
-    width: auto;
-    min-width: 68px;
-
-    padding: 7px 10px;
-
-    border-radius: 10px;
-
-    background: #202329;
-    color: #9da3ad;
-
-    font-size: 11px;
-    font-weight: 600;
-
-    opacity: 0.75;
-}
-
-.small-vault-button:active {
-    opacity: 1;
+.key.wide {
+  grid-column: span 2;
 }
 
 
 /* =========================
-   GENERAL PAGE
+   NORMAL ACTION BUTTONS
 ========================= */
 
-.page {
-    width: 100%;
-    height: 100%;
+.action {
+  width: 100%;
 
-    max-width: 600px;
+  flex: 0 0 auto;
 
-    margin: 0 auto;
+  border: none;
 
-    padding: 24px 16px 30px;
+  border-radius: 17px;
 
-    overflow-y: auto;
+  padding: 15px 12px;
+
+  color: var(--white);
+
+  font-size: 18px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.08s ease,
+    filter 0.08s ease;
+
+  position: relative;
+
+  z-index: 20;
 }
 
-.page h2 {
-    margin:
-        0
-        0
-        20px;
+.action:active {
+  transform: scale(0.97);
+  filter: brightness(1.2);
+}
 
-    font-size: 26px;
+.green {
+  background:
+    linear-gradient(
+      135deg,
+      #16c997,
+      #07986f
+    );
+}
+
+.blue {
+  background:
+    linear-gradient(
+      135deg,
+      #4384ff,
+      #245bd1
+    );
+}
+
+.orange {
+  background:
+    linear-gradient(
+      135deg,
+      #ff8734,
+      #e4570b
+    );
+}
+
+.red {
+  background:
+    linear-gradient(
+      135deg,
+      #f05268,
+      #c72d46
+    );
+}
+
+.purple {
+  background:
+    linear-gradient(
+      135deg,
+      #9865ff,
+      #7138d9
+    );
 }
 
 
 /* =========================
-   LOGIN
+   SMALL PRIVATE VAULT BUTTON
 ========================= */
 
-.login-page {
-    display: flex;
+/*
+  Calculator screen only.
+  Makes PRIVATE VAULT small and puts it
+  in the bottom-right corner.
+*/
 
-    flex-direction: column;
+#screen-calculator #btn-vault {
+  position: absolute;
 
-    justify-content: center;
+  right: 4px;
+  bottom: 4px;
+
+  width: auto;
+  min-width: 42px;
+
+  padding: 9px 12px;
+
+  border-radius: 14px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  background:
+    linear-gradient(
+      135deg,
+      #4384ff,
+      #245bd1
+    );
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.35);
+
+  z-index: 50;
 }
+
+
+/*
+  Keep HISTORY above the calculator
+  but leave room for the small vault button.
+*/
+
+#screen-calculator #btn-history {
+  margin-bottom: 45px;
+}
+
+
+/* =========================
+   INPUTS
+========================= */
+
+.text {
+  width: 100%;
+
+  flex: 0 0 auto;
+
+  padding: 15px 17px;
+
+  border-radius: 17px;
+
+  border: 1px solid var(--border);
+
+  outline: none;
+
+  background:
+    linear-gradient(
+      145deg,
+      #151e31,
+      #0f1627
+    );
+
+  color: var(--white);
+
+  font-size: 21px;
+  font-weight: 700;
+
+  text-align: center;
+}
+
+.text:focus {
+  border-color: var(--blue);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(52, 120, 255, 0.18);
+}
+
+.text::placeholder {
+  color: var(--grey);
+}
+
+
+/* =========================
+   MESSAGES
+========================= */
 
 .message {
-    min-height: 24px;
+  flex: 0 0 auto;
 
-    margin-bottom: 10px;
+  min-height: 28px;
 
-    font-size: 14px;
-}
+  font-size: 17px;
 
-input {
-    width: 100%;
+  font-weight: 800;
 
-    min-height: 52px;
-
-    margin-bottom: 12px;
-
-    padding: 12px 14px;
-
-    border: 1px solid #343840;
-
-    border-radius: 14px;
-
-    outline: none;
-
-    background: #1b1d22;
-    color: #ffffff;
-
-    font-size: 17px;
-}
-
-input:focus {
-    border-color: #596273;
+  text-align: center;
 }
 
 
 /* =========================
-   BUTTONS
+   HISTORY
 ========================= */
 
-.primary-button,
-.danger-button,
-.back-button,
-.small-button {
-    min-height: 48px;
+.history-list {
+  flex: 1;
 
-    padding:
-        10px
-        16px;
+  min-height: 0;
 
-    border-radius: 14px;
+  overflow-y: auto;
 
-    font-weight: 700;
+  display: flex;
 
-    font-size: 14px;
+  flex-direction: column;
+
+  gap: 9px;
+
+  padding: 4px;
 }
 
-.primary-button {
-    width: 100%;
+.history-item {
+  flex: 0 0 auto;
 
-    background: #39475b;
-    color: #ffffff;
+  background:
+    linear-gradient(
+      145deg,
+      #151f33,
+      #101829
+    );
 
-    margin-bottom: 10px;
-}
+  border:
+    1px solid var(--border);
 
-.danger-button {
-    width: 100%;
+  border-radius: 15px;
 
-    background: #492d32;
-    color: #ffffff;
+  padding: 14px;
 
-    margin-bottom: 10px;
-}
+  font-size: 18px;
 
-.back-button {
-    width: 100%;
+  font-weight: 700;
 
-    background: #292c33;
-    color: #ffffff;
-
-    margin-top: 10px;
-}
-
-.small-button {
-    min-height: 40px;
-
-    padding:
-        7px
-        12px;
-
-    background: #292c33;
-    color: #ffffff;
+  text-align: center;
 }
 
 
@@ -328,133 +472,255 @@ input:focus {
 ========================= */
 
 .vault-header {
-    width: 100%;
+  width: 100%;
 
-    display: flex;
+  flex: 0 0 auto;
 
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
 
-    gap: 10px;
+  align-items: center;
 
-    margin-bottom: 16px;
+  gap: 8px;
+
+  position: relative;
+
+  z-index: 30;
 }
 
-.vault-header h2 {
-    margin: 0;
-}
-
-.vault-actions {
-    width: 100%;
-
-    margin-bottom: 18px;
+.vault-header .title {
+  flex: 1;
 }
 
 
 /* =========================
-   PHOTO GRID
+   LOCK
+========================= */
+
+.lock {
+  flex: 0 0 auto;
+
+  border: none;
+
+  border-radius: 14px;
+
+  padding: 10px 12px;
+
+  color: var(--white);
+
+  background:
+    linear-gradient(
+      135deg,
+      #f05268,
+      #c72d46
+    );
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  z-index: 50;
+
+  touch-action: manipulation;
+}
+
+
+/* =========================
+   VAULT GRID
 ========================= */
 
 .vault-grid {
-    width: 100%;
+  flex: 1;
 
-    display: grid;
+  min-height: 0;
 
-    grid-template-columns:
-        repeat(2, 1fr);
+  overflow-y: auto;
 
-    gap: 12px;
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 10px;
+
+  padding: 5px;
+
+  align-content: start;
+
+  position: relative;
+
+  z-index: 5;
 }
 
 .photo-card {
-    position: relative;
+  width: 100%;
 
-    width: 100%;
+  aspect-ratio: 1;
 
-    overflow: hidden;
+  background: var(--card);
 
-    border-radius: 14px;
+  border:
+    1px solid var(--border);
 
-    background: #1b1d22;
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
 }
 
 .photo-card img {
-    display: block;
+  width: 100%;
+  height: 100%;
 
-    width: 100%;
+  object-fit: cover;
 
-    aspect-ratio: 1 / 1;
-
-    object-fit: cover;
-
-    cursor: pointer;
-}
-
-.photo-delete {
-    width: 100%;
-
-    min-height: 40px;
-
-    background: #3b272b;
-    color: #ffffff;
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.photo-empty {
-    grid-column: 1 / -1;
-
-    padding: 40px 20px;
-
-    border-radius: 16px;
-
-    background: #1b1d22;
-
-    text-align: center;
-
-    color: #aeb3bd;
+  display: block;
 }
 
 
 /* =========================
-   PHOTO VIEWER
+   DELETE BUTTON
 ========================= */
 
-.photo-viewer {
-    width: 100%;
-    height: 100%;
+.photo-delete {
+  position: absolute;
 
-    padding:
-        16px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
 
-    display: flex;
+  width: calc(100% - 12px);
 
-    flex-direction: column;
+  border: none;
 
-    justify-content: center;
+  border-radius: 12px;
 
-    align-items: center;
+  padding: 8px;
 
-    background: #000000;
+  background:
+    rgba(210, 35, 62, 0.92);
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 900;
+
+  cursor: pointer;
+
+  z-index: 20;
+
+  touch-action: manipulation;
 }
 
-#photo-full {
-    display: block;
-
-    max-width: 100%;
-    max-height: 70vh;
-
-    object-fit: contain;
-
-    border-radius: 10px;
-
-    margin-bottom: 16px;
+.photo-delete:active {
+  transform: scale(0.96);
 }
 
-.photo-viewer-actions {
-    width: 100%;
-    max-width: 500px;
+
+/* =========================
+   EMPTY VAULT
+========================= */
+
+.photo-empty {
+  grid-column: span 2;
+
+  color: var(--grey);
+
+  font-size: 19px;
+
+  text-align: center;
+
+  padding: 45px 10px;
+}
+
+
+/* =========================
+   PHOTO VIEW
+========================= */
+
+.photo-stage {
+  flex: 1;
+
+  min-height: 0;
+
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  overflow: hidden;
+
+  padding: 5px;
+
+  position: relative;
+
+  z-index: 5;
+}
+
+.photo-stage img {
+  max-width: 100%;
+
+  max-height: 100%;
+
+  border-radius: 18px;
+
+  object-fit: contain;
+
+  box-shadow:
+    0 10px 35px
+    rgba(0, 0, 0, 0.45);
+}
+
+
+/* =========================
+   BACK BUTTONS
+========================= */
+
+/*
+  Keep Back buttons on top so they
+  remain clickable.
+*/
+
+#btn-back-calc,
+#btn-back-login,
+#btn-back-vault,
+#btn-photo-back {
+  position: relative;
+
+  z-index: 100;
+
+  pointer-events: auto;
+
+  touch-action: manipulation;
+}
+
+
+/* =========================
+   CHANGE PIN SCREEN
+========================= */
+
+#screen-changepin {
+  position: relative;
+}
+
+#screen-changepin .action {
+  position: relative;
+
+  z-index: 100;
 }
 
 
@@ -462,42 +728,33 @@ input:focus {
    MOBILE
 ========================= */
 
-@media (max-width: 380px) {
+@media (max-width: 360px) {
 
-    .calculator {
-        padding:
-            16px
-            10px
-            80px
-            10px;
-    }
-
-    .display {
-        min-height: 85px;
-
-        font-size: 28px;
-    }
-
-    .calculator-grid {
-        gap: 7px;
-    }
-
-    .key {
-        min-height: 56px;
-
-        border-radius: 15px;
-
-        font-size: 19px;
-    }
-
-    .small-vault-button {
-        right: 8px;
-        bottom: 8px;
-
-        font-size: 10px;
-
-        padding:
-            6px
-            8px;
-    }
+  #app {
+    padding: 8px;
   }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .display {
+    font-size: 29px;
+    min-height: 65px;
+  }
+
+  .key {
+    font-size: 23px;
+    border-radius: 15px;
+  }
+
+  .action {
+    font-size: 16px;
+    padding: 13px 10px;
+  }
+
+  #screen-calculator #btn-vault {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+    }
