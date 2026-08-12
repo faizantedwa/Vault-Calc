@@ -34,9 +34,7 @@ jobs:
           cp styles.css app/src/main/assets/styles.css
 
 
-          # ==================================================
           # APP ICON
-          # ==================================================
 
           if [ -f "icon.png" ]; then
             cp icon.png app/src/main/res/drawable/app_icon.png
@@ -46,9 +44,7 @@ jobs:
           fi
 
 
-          # ==================================================
           # SETTINGS
-          # ==================================================
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -74,9 +70,7 @@ jobs:
           EOF
 
 
-          # ==================================================
           # ROOT BUILD
-          # ==================================================
 
           cat > build.gradle <<'EOF'
           plugins {
@@ -85,9 +79,7 @@ jobs:
           EOF
 
 
-          # ==================================================
           # APP BUILD
-          # ==================================================
 
           cat > app/build.gradle <<'EOF'
           plugins {
@@ -114,9 +106,7 @@ jobs:
           EOF
 
 
-          # ==================================================
           # STYLE
-          # ==================================================
 
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <resources>
@@ -131,9 +121,7 @@ jobs:
           EOF
 
 
-          # ==================================================
-          # ANDROID MANIFEST
-          # ==================================================
+          # MANIFEST
 
           cat > app/src/main/AndroidManifest.xml <<EOF
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -169,9 +157,7 @@ jobs:
           EOF
 
 
-          # ==================================================
           # MAIN ACTIVITY
-          # ==================================================
 
           cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'EOF'
           package com.faizantedwa.vaultcalc;
@@ -214,33 +200,24 @@ jobs:
 
                   super.onCreate(savedInstanceState);
 
-
                   webView = new WebView(this);
-
 
                   WebSettings settings =
                           webView.getSettings();
 
-
                   settings.setJavaScriptEnabled(true);
-
                   settings.setDomStorageEnabled(true);
-
                   settings.setAllowFileAccess(true);
-
                   settings.setAllowContentAccess(true);
-
 
                   webView.setWebViewClient(
                           new WebViewClient()
                   );
 
-
                   webView.addJavascriptInterface(
                           new VaultBridge(),
                           "VaultAndroid"
                   );
-
 
                   webView.setWebChromeClient(
                           new WebChromeClient() {
@@ -251,45 +228,29 @@ jobs:
                                       ValueCallback<Uri[]> callback,
                                       FileChooserParams params) {
 
-
                                   if (fileCallback != null) {
-
-                                      fileCallback
-                                              .onReceiveValue(null);
+                                      fileCallback.onReceiveValue(null);
                                   }
-
 
                                   fileCallback = callback;
 
-
                                   selectedUris.clear();
-
 
                                   Intent intent =
                                           new Intent(
                                                   Intent.ACTION_OPEN_DOCUMENT
                                           );
 
-
                                   intent.addCategory(
                                           Intent.CATEGORY_OPENABLE
                                   );
 
-
-                                  intent.setType(
-                                          "image/*"
-                                  );
-
-
-                                  /*
-                                   * MULTIPLE PHOTO SELECTION
-                                   */
+                                  intent.setType("image/*");
 
                                   intent.putExtra(
                                           Intent.EXTRA_ALLOW_MULTIPLE,
                                           true
                                   );
-
 
                                   try {
 
@@ -310,9 +271,7 @@ jobs:
                           }
                   );
 
-
                   setContentView(webView);
-
 
                   webView.loadUrl(
                           "file:///android_asset/index.html"
@@ -327,430 +286,4 @@ jobs:
               @Override
               public void onBackPressed() {
 
-                  if (webView != null) {
-
-                      webView.evaluateJavascript(
-                              "window.handleAndroidBack && " +
-                              "window.handleAndroidBack();",
-                              null
-                      );
-
-                  } else {
-
-                      super.onBackPressed();
-                  }
-              }
-
-
-              /*
-               * FILE PICKER RESULT
-               */
-
-              @Override
-              protected void onActivityResult(
-                      int requestCode,
-                      int resultCode,
-                      Intent data) {
-
-                  super.onActivityResult(
-                          requestCode,
-                          resultCode,
-                          data
-                  );
-
-
-                  if (requestCode != FILE_REQUEST) {
-                      return;
-                  }
-
-
-                  Uri[] results = null;
-
-
-                  if (
-                          resultCode == RESULT_OK &&
-                          data != null
-                  ) {
-
-
-                      /*
-                       * MULTIPLE FILES
-                       */
-
-                      if (data.getClipData() != null) {
-
-                          int count =
-                                  data.getClipData()
-                                          .getItemCount();
-
-
-                          results =
-                                  new Uri[count];
-
-
-                          for (
-                                  int i = 0;
-                                  i < count;
-                                  i++
-                          ) {
-
-                              Uri uri =
-                                      data.getClipData()
-                                              .getItemAt(i)
-                                              .getUri();
-
-
-                              selectedUris.add(uri);
-
-
-                              results[i] = uri;
-                          }
-
-
-                      }
-
-
-                      /*
-                       * SINGLE FILE
-                       */
-
-                      else if (
-                              data.getData() != null
-                      ) {
-
-                          Uri uri =
-                                  data.getData();
-
-
-                          selectedUris.add(uri);
-
-
-                          results =
-                                  new Uri[] {
-                                          uri
-                                  };
-                      }
-                  }
-
-
-                  if (fileCallback != null) {
-
-                      fileCallback
-                              .onReceiveValue(
-                                      results
-                              );
-
-                      fileCallback = null;
-                  }
-              }
-
-
-              /*
-               * JAVASCRIPT BRIDGE
-               */
-
-              public class VaultBridge {
-
-
-                  /*
-                   * SAVE PHOTO INTO PRIVATE
-                   * APP STORAGE
-                   */
-
-                  @JavascriptInterface
-                  public String savePrivatePhoto(
-                          String dataUrl,
-                          String originalName) {
-
-                      try {
-
-
-                          if (
-                                  dataUrl == null ||
-                                  !dataUrl.contains(",")
-                          ) {
-
-                              return "";
-                          }
-
-
-                          String base64 =
-                                  dataUrl.substring(
-                                          dataUrl.indexOf(",") + 1
-                                  );
-
-
-                          byte[] bytes =
-                                  Base64.decode(
-                                          base64,
-                                          Base64.DEFAULT
-                                  );
-
-
-                          File folder =
-                                  new File(
-                                          getFilesDir(),
-                                          "vault_photos"
-                                  );
-
-
-                          if (!folder.exists()) {
-
-                              folder.mkdirs();
-                          }
-
-
-                          String name =
-                                  originalName == null
-                                          ? "photo"
-                                          : originalName;
-
-
-                          int hash =
-                                  Math.abs(
-                                          name.hashCode()
-                                  );
-
-
-                          String safeName =
-                                  "vault_" +
-                                  System.currentTimeMillis() +
-                                  "_" +
-                                  hash +
-                                  ".jpg";
-
-
-                          File output =
-                                  new File(
-                                          folder,
-                                          safeName
-                                  );
-
-
-                          FileOutputStream fos =
-                                  new FileOutputStream(
-                                          output
-                                  );
-
-
-                          fos.write(bytes);
-
-                          fos.flush();
-
-                          fos.close();
-
-
-                          return output
-                                  .toURI()
-                                  .toString();
-
-
-                      } catch (Exception e) {
-
-                          return "";
-                      }
-                  }
-
-
-                  /*
-                   * DELETE PRIVATE VAULT PHOTO
-                   */
-
-                  @JavascriptInterface
-                  public void deleteVaultPhoto(
-                          String path) {
-
-                      try {
-
-
-                          if (path == null) {
-                              return;
-                          }
-
-
-                          if (
-                                  path.startsWith("file:")
-                          ) {
-
-                              Uri uri =
-                                      Uri.parse(path);
-
-
-                              String filePath =
-                                      uri.getPath();
-
-
-                              if (filePath != null) {
-
-                                  File file =
-                                          new File(
-                                                  filePath
-                                          );
-
-
-                                  if (file.exists()) {
-
-                                      file.delete();
-                                  }
-                              }
-                          }
-
-                      } catch (Exception e) {
-                      }
-                  }
-
-
-                  /*
-                   * REQUEST DELETION OF ORIGINAL
-                   * GALLERY FILES
-                   */
-
-                  @JavascriptInterface
-                  public void requestMoveToVault() {
-
-
-                      if (
-                              selectedUris.size() == 0
-                      ) {
-
-                          return;
-                      }
-
-
-                      ArrayList<Uri> uris =
-                              new ArrayList<>(
-                                      selectedUris
-                              );
-
-
-                      /*
-                       * Android 11+
-                       *
-                       * Android will show its own
-                       * confirmation screen before
-                       * deleting the originals.
-                       */
-
-                      if (
-                              android.os.Build.VERSION.SDK_INT
-                                      >= 30
-                      ) {
-
-                          try {
-
-
-                              Intent intent =
-                                      android.provider.MediaStore
-                                              .createDeleteRequest(
-                                                      getContentResolver(),
-                                                      uris
-                                              );
-
-
-                              startIntentSenderForResult(
-                                      intent.getIntentSender(),
-                                      2001,
-                                      null,
-                                      0,
-                                      0,
-                                      0
-                              );
-
-
-                          } catch (Exception e) {
-
-                              /*
-                               * Private copy remains
-                               * safely inside the app.
-                               */
-                          }
-
-
-                      } else {
-
-
-                          /*
-                           * Older Android versions.
-                           */
-
-                          for (Uri uri : uris) {
-
-                              try {
-
-                                  getContentResolver()
-                                          .delete(
-                                                  uri,
-                                                  null,
-                                                  null
-                                          );
-
-                              } catch (Exception e) {
-                              }
-                          }
-                      }
-                  }
-
-
-                  /*
-                   * SCREEN TRACKING
-                   */
-
-                  @JavascriptInterface
-                  public void setCurrentScreen(
-                          String screen) {
-
-                      /*
-                       * Reserved.
-                       */
-                  }
-
-
-                  /*
-                   * CLOSE APP WHEN CALCULATOR
-                   * IS THE ROOT SCREEN
-                   */
-
-                  @JavascriptInterface
-                  public void finishApp() {
-
-                      runOnUiThread(
-                              new Runnable() {
-
-                                  @Override
-                                  public void run() {
-
-                                      finish();
-                                  }
-                              }
-                      );
-                  }
-              }
-          }
-          EOF
-
-
-      # ==================================================
-      # BUILD APK
-      # ==================================================
-
-      - name: Build APK
-        run: |
-
-          gradle wrapper --gradle-version 8.9
-
-          chmod +x gradlew
-
-          ./gradlew assembleDebug
-
-
-      # ==================================================
-      # UPLOAD APK
-      # ==================================================
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-
-        with:
-          name: VaultCalc-APK
-
-          path: app/build/outputs/apk/debug/app-debug.apk
+                 
