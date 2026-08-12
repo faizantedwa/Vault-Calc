@@ -21,6 +21,7 @@ jobs:
       - name: Create Android project
         shell: bash
         run: |
+
           set -e
 
           mkdir -p app/src/main/assets
@@ -39,64 +40,74 @@ jobs:
             ICON_LINE=''
           fi
 
-          printf '%s\n' \
-          'pluginManagement {' \
-          '    repositories {' \
-          '        google()' \
-          '        mavenCentral()' \
-          '        gradlePluginPortal()' \
-          '    }' \
-          '}' \
-          '' \
-          'dependencyResolutionManagement {' \
-          '    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)' \
-          '    repositories {' \
-          '        google()' \
-          '        mavenCentral()' \
-          '    }' \
-          '}' \
-          '' \
-          'rootProject.name = "VaultCalc"' \
-          'include(":app")' \
-          > settings.gradle
+          cat > settings.gradle <<'SETTINGS_END'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
 
-          printf '%s\n' \
-          'plugins {' \
-          '    id '\''com.android.application'\'' version '\''8.7.3'\'' apply false' \
-          '}' \
-          > build.gradle
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
-          printf '%s\n' \
-          'plugins {' \
-          '    id '\''com.android.application'\'' \
-          '}' \
-          '' \
-          'android {' \
-          '    namespace "com.faizantedwa.vaultcalc"' \
-          '    compileSdk 35' \
-          '' \
-          '    defaultConfig {' \
-          '        applicationId "com.faizantedwa.vaultcalc"' \
-          '        minSdk 23' \
-          '        targetSdk 35' \
-          '        versionCode 1' \
-          '        versionName "1.0"' \
-          '    }' \
-          '}' \
-          > app/build.gradle
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
 
-          printf '%s\n' \
-          '<resources>' \
-          '    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">' \
-          '    </style>' \
-          '</resources>' \
-          > app/src/main/res/values/styles.xml
+          rootProject.name = "VaultCalc"
 
-          if [ -f "icon.png" ]; then
-            ICON_ATTRIBUTE='android:icon="@drawable/app_icon"'
-          else
-            ICON_ATTRIBUTE=''
-          fi
+          include(":app")
+          SETTINGS_END
+
+
+          cat > build.gradle <<'ROOT_END'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          ROOT_END
+
+
+          cat > app/build.gradle <<'APP_END'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.faizantedwa.vaultcalc'
+
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId "com.faizantedwa.vaultcalc"
+
+                  minSdk 23
+
+                  targetSdk 35
+
+                  versionCode 1
+
+                  versionName "1.0"
+              }
+          }
+          APP_END
+
+
+          cat > app/src/main/res/values/styles.xml <<'STYLE_END'
+          <resources>
+
+              <style
+                  name="AppTheme"
+                  parent="android:style/Theme.Material.Light.NoActionBar">
+
+              </style>
+
+          </resources>
+          STYLE_END
+
 
           cat > app/src/main/AndroidManifest.xml <<MANIFEST_END
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -104,7 +115,7 @@ jobs:
               <application
                   android:theme="@style/AppTheme"
                   android:label="Vault Calc"
-                  $ICON_ATTRIBUTE
+                  $ICON_LINE
                   android:allowBackup="false"
                   android:supportsRtl="true">
 
@@ -114,8 +125,13 @@ jobs:
                       android:exported="true">
 
                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
+
+                          <action
+                              android:name="android.intent.action.MAIN" />
+
+                          <category
+                              android:name="android.intent.category.LAUNCHER" />
+
                       </intent-filter>
 
                   </activity>
@@ -125,56 +141,75 @@ jobs:
           </manifest>
           MANIFEST_END
 
-          cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<JAVA_END
+
+          cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'JAVA_END'
           package com.faizantedwa.vaultcalc;
 
           import android.app.Activity;
           import android.app.PendingIntent;
           import android.os.Bundle;
+
           import android.content.Intent;
           import android.net.Uri;
+
           import android.webkit.JavascriptInterface;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
+
           import android.util.Base64;
 
           import java.io.File;
           import java.io.FileOutputStream;
+
           import java.util.ArrayList;
+
 
           public class MainActivity extends Activity {
 
               private WebView webView;
+
               private ValueCallback<Uri[]> fileCallback;
 
               private static final int FILE_REQUEST = 1001;
+
               private static final int DELETE_REQUEST = 2001;
 
               private final ArrayList<Uri> selectedUris =
                       new ArrayList<>();
 
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
+
                   super.onCreate(savedInstanceState);
 
                   webView = new WebView(this);
 
-                  WebSettings settings = webView.getSettings();
+                  WebSettings settings =
+                          webView.getSettings();
 
                   settings.setJavaScriptEnabled(true);
+
                   settings.setDomStorageEnabled(true);
+
                   settings.setAllowFileAccess(true);
+
                   settings.setAllowContentAccess(true);
 
-                  webView.setWebViewClient(new WebViewClient());
+
+                  webView.setWebViewClient(
+                          new WebViewClient()
+                  );
+
 
                   webView.addJavascriptInterface(
                           new VaultBridge(),
                           "VaultAndroid"
                   );
+
 
                   webView.setWebChromeClient(
                           new WebChromeClient() {
@@ -186,29 +221,41 @@ jobs:
                                       FileChooserParams params) {
 
                                   if (fileCallback != null) {
-                                      fileCallback.onReceiveValue(null);
+
+                                      fileCallback
+                                              .onReceiveValue(null);
                                   }
 
+
                                   fileCallback = callback;
+
                                   selectedUris.clear();
+
 
                                   Intent intent =
                                           new Intent(
                                                   Intent.ACTION_OPEN_DOCUMENT
                                           );
 
+
                                   intent.addCategory(
                                           Intent.CATEGORY_OPENABLE
                                   );
 
-                                  intent.setType("image/*");
+
+                                  intent.setType(
+                                          "image/*"
+                                  );
+
 
                                   intent.putExtra(
                                           Intent.EXTRA_ALLOW_MULTIPLE,
                                           true
                                   );
 
+
                                   try {
+
                                       startActivityForResult(
                                               intent,
                                               FILE_REQUEST
@@ -217,19 +264,24 @@ jobs:
                                       return true;
 
                                   } catch (Exception e) {
+
                                       fileCallback = null;
+
                                       return false;
                                   }
                               }
                           }
                   );
 
+
                   setContentView(webView);
+
 
                   webView.loadUrl(
                           "file:///android_asset/index.html"
                   );
               }
+
 
               @Override
               public void onBackPressed() {
@@ -243,9 +295,11 @@ jobs:
                       );
 
                   } else {
+
                       super.onBackPressed();
                   }
               }
+
 
               @Override
               protected void onActivityResult(
@@ -259,21 +313,30 @@ jobs:
                           data
                   );
 
+
                   if (requestCode == FILE_REQUEST) {
 
                       Uri[] results = null;
+
 
                       if (
                               resultCode == RESULT_OK &&
                               data != null
                       ) {
 
-                          if (data.getClipData() != null) {
+
+                          if (
+                                  data.getClipData() != null
+                          ) {
 
                               int count =
-                                      data.getClipData().getItemCount();
+                                      data.getClipData()
+                                          .getItemCount();
 
-                              results = new Uri[count];
+
+                              results =
+                                      new Uri[count];
+
 
                               for (
                                       int i = 0;
@@ -286,34 +349,55 @@ jobs:
                                               .getItemAt(i)
                                               .getUri();
 
+
                                   selectedUris.add(uri);
-                                  results[i] = uri;
+
+
+                                  results[i] =
+                                          uri;
                               }
 
-                          } else if (data.getData() != null) {
 
-                              Uri uri = data.getData();
+                          } else if (
+                                  data.getData() != null
+                          ) {
+
+                              Uri uri =
+                                      data.getData();
+
 
                               selectedUris.add(uri);
 
-                              results = new Uri[] {
-                                      uri
-                              };
+
+                              results =
+                                      new Uri[] {
+                                              uri
+                                      };
                           }
                       }
 
+
                       if (fileCallback != null) {
-                          fileCallback.onReceiveValue(results);
+
+                          fileCallback
+                                  .onReceiveValue(results);
+
                           fileCallback = null;
                       }
                   }
 
-                  if (requestCode == DELETE_REQUEST) {
+
+                  if (
+                          requestCode == DELETE_REQUEST
+                  ) {
+
                       selectedUris.clear();
                   }
               }
 
+
               public class VaultBridge {
+
 
                   @JavascriptInterface
                   public String savePrivatePhoto(
@@ -326,13 +410,16 @@ jobs:
                                   dataUrl == null ||
                                   !dataUrl.contains(",")
                           ) {
+
                               return "";
                           }
+
 
                           String base64 =
                                   dataUrl.substring(
                                           dataUrl.indexOf(",") + 1
                                   );
+
 
                           byte[] bytes =
                                   Base64.decode(
@@ -340,27 +427,35 @@ jobs:
                                           Base64.DEFAULT
                                   );
 
+
                           File folder =
                                   new File(
                                           getFilesDir(),
                                           "vault_photos"
                                   );
 
+
                           if (!folder.exists()) {
+
                               folder.mkdirs();
                           }
+
 
                           String name =
                                   originalName == null
                                           ? "photo"
                                           : originalName;
 
+
                           String safeName =
                                   "vault_" +
                                   System.currentTimeMillis() +
                                   "_" +
-                                  Math.abs(name.hashCode()) +
+                                  Math.abs(
+                                          name.hashCode()
+                                  ) +
                                   ".jpg";
+
 
                           File output =
                                   new File(
@@ -368,41 +463,68 @@ jobs:
                                           safeName
                                   );
 
+
                           FileOutputStream fos =
-                                  new FileOutputStream(output);
+                                  new FileOutputStream(
+                                          output
+                                  );
+
 
                           fos.write(bytes);
+
                           fos.flush();
+
                           fos.close();
 
-                          return output.toURI().toString();
+
+                          return output
+                                  .toURI()
+                                  .toString();
+
 
                       } catch (Exception e) {
+
                           return "";
                       }
                   }
 
+
                   @JavascriptInterface
-                  public void deleteVaultPhoto(String path) {
+                  public void deleteVaultPhoto(
+                          String path) {
 
                       try {
 
                           if (path == null) {
+
                               return;
                           }
 
-                          if (path.startsWith("file:")) {
 
-                              Uri uri = Uri.parse(path);
+                          if (
+                                  path.startsWith(
+                                          "file:"
+                                  )
+                          ) {
 
-                              String filePath = uri.getPath();
+                              Uri uri =
+                                      Uri.parse(path);
+
+
+                              String filePath =
+                                      uri.getPath();
+
 
                               if (filePath != null) {
 
                                   File file =
-                                          new File(filePath);
+                                          new File(
+                                                  filePath
+                                          );
+
 
                                   if (file.exists()) {
+
                                       file.delete();
                                   }
                               }
@@ -412,15 +534,21 @@ jobs:
                       }
                   }
 
+
                   @JavascriptInterface
                   public void requestMoveToVault() {
 
                       if (selectedUris.isEmpty()) {
+
                           return;
                       }
 
+
                       ArrayList<Uri> uris =
-                              new ArrayList<>(selectedUris);
+                              new ArrayList<>(
+                                      selectedUris
+                              );
+
 
                       if (
                               android.os.Build.VERSION.SDK_INT >= 30
@@ -435,8 +563,10 @@ jobs:
                                                       uris
                                               );
 
+
                               startIntentSenderForResult(
-                                      pendingIntent.getIntentSender(),
+                                      pendingIntent
+                                              .getIntentSender(),
                                       DELETE_REQUEST,
                                       null,
                                       0,
@@ -447,29 +577,35 @@ jobs:
                           } catch (Exception e) {
                           }
 
+
                       } else {
 
                           for (Uri uri : uris) {
 
                               try {
 
-                                  getContentResolver().delete(
-                                          uri,
-                                          null,
-                                          null
-                                  );
+                                  getContentResolver()
+                                          .delete(
+                                                  uri,
+                                                  null,
+                                                  null
+                                          );
 
                               } catch (Exception e) {
                               }
                           }
 
+
                           selectedUris.clear();
                       }
                   }
 
+
                   @JavascriptInterface
-                  public void setCurrentScreen(String screen) {
+                  public void setCurrentScreen(
+                          String screen) {
                   }
+
 
                   @JavascriptInterface
                   public void finishApp() {
@@ -479,6 +615,7 @@ jobs:
 
                                   @Override
                                   public void run() {
+
                                       finish();
                                   }
                               }
@@ -488,24 +625,32 @@ jobs:
           }
           JAVA_END
 
+
       - name: Verify Android project
         shell: bash
         run: |
+
           set -e
 
-          echo "Checking project files..."
+          echo "Checking project..."
 
           test -f settings.gradle
+
           test -f build.gradle
+
           test -f app/build.gradle
+
           test -f app/src/main/AndroidManifest.xml
+
           test -f app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java
 
           echo "Project files OK"
 
+
       - name: Build APK
         shell: bash
         run: |
+
           set -e
 
           gradle wrapper --gradle-version 8.9
@@ -514,18 +659,21 @@ jobs:
 
           ./gradlew assembleDebug
 
+
       - name: Check APK
         shell: bash
         run: |
+
           set -e
 
-          echo "APK output:"
+          echo "Checking APK output..."
 
           ls -lh app/build/outputs/apk/debug/
 
           test -f app/build/outputs/apk/debug/app-debug.apk
 
           echo "APK FOUND SUCCESSFULLY!"
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
