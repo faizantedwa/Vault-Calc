@@ -30,16 +30,8 @@ jobs:
           cp app.js app/src/main/assets/app.js
           cp styles.css app/src/main/assets/styles.css
 
-
-          # ICON
-          # अगर icon.png मौजूद है तो उसे APK में डालो
-          if [ -f "icon.png" ]; then
-            cp icon.png app/src/main/res/drawable/app_icon.png
-            ICON_LINE='android:icon="@drawable/app_icon"'
-          else
-            ICON_LINE=''
-          fi
-
+          # CUSTOM APP ICON
+          cp icon.png app/src/main/res/drawable/app_icon.png
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -64,13 +56,11 @@ jobs:
           include(":app")
           EOF
 
-
           cat > build.gradle <<'EOF'
           plugins {
               id 'com.android.application' version '8.7.3' apply false
           }
           EOF
-
 
           cat > app/build.gradle <<'EOF'
           plugins {
@@ -84,39 +74,31 @@ jobs:
 
               defaultConfig {
                   applicationId "com.faizantedwa.vaultcalc"
-
                   minSdk 23
-
                   targetSdk 35
-
                   versionCode 1
-
                   versionName "1.0"
               }
           }
           EOF
 
-
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <resources>
-
               <style
                   name="AppTheme"
                   parent="android:style/Theme.Material.Light.NoActionBar">
-
               </style>
-
           </resources>
           EOF
 
-
-          cat > app/src/main/AndroidManifest.xml <<EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <application
                   android:theme="@style/AppTheme"
                   android:label="Vault Calc"
-                  $ICON_LINE
+                  android:icon="@drawable/app_icon"
+                  android:roundIcon="@drawable/app_icon"
                   android:usesCleartextTraffic="true">
 
                   <activity
@@ -140,7 +122,6 @@ jobs:
 
           </manifest>
           EOF
-
 
           cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'EOF'
           package com.faizantedwa.vaultcalc;
@@ -174,11 +155,8 @@ jobs:
                           webView.getSettings();
 
                   settings.setJavaScriptEnabled(true);
-
                   settings.setDomStorageEnabled(true);
-
                   settings.setAllowFileAccess(true);
-
                   settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(
@@ -195,7 +173,6 @@ jobs:
                                       FileChooserParams params) {
 
                                   if (fileCallback != null) {
-
                                       fileCallback
                                               .onReceiveValue(null);
                                   }
@@ -297,7 +274,6 @@ jobs:
           }
           EOF
 
-
       - name: Build APK
         run: |
 
@@ -306,7 +282,6 @@ jobs:
           chmod +x gradlew
 
           ./gradlew assembleDebug
-
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
