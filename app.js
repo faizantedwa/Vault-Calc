@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
-const STORE_KEY = "calcvault.photos.v1";
-const PIN_KEY = "calcvault.pin.v1";
+const STORE_KEY = "calcvault.photos.v2";
+const PIN_KEY = "calcvault.pin.v2";
 
 const screens = {
   calc: $("screen-calculator"),
@@ -9,74 +9,50 @@ const screens = {
   login: $("screen-login"),
   vault: $("screen-vault"),
   changepin: $("screen-changepin"),
-  photo: $("screen-photo"),
+  photo: $("screen-photo")
 };
 
 let pin = localStorage.getItem(PIN_KEY) || "";
 let photos = [];
+let history = [];
+let calcExpr = "";
 
 try {
   photos = JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
+  if (!Array.isArray(photos)) photos = [];
 } catch {
   photos = [];
 }
 
-if (!Array.isArray(photos)) {
-  photos = [];
-}
-
-let history = [];
-let calcExpr = "";
-
 function show(name) {
-  for (const key of Object.keys(screens)) {
+  Object.keys(screens).forEach((key) => {
     screens[key].classList.toggle("hidden", key !== name);
-  }
-}
-
-function renderDisplay() {
-  $("display").textContent = calcExpr || "0";
+  });
 }
 
 /* =========================
    CALCULATOR
 ========================= */
 
-function appendKey(value) {
-  if (calcExpr === "ERROR") {
-    calcExpr = "";
-  }
+function renderDisplay() {
+  $("display").textContent = calcExpr || "0";
+}
 
+function addKey(value) {
+  if (calcExpr === "ERROR") calcExpr = "";
   calcExpr += value;
   renderDisplay();
 }
 
-const MAPPING = {
-  "×": "*",
-  "÷": "/",
-  "−": "-"
-};
+function calculate() {
+  if (!calcExpr || calcExpr === "ERROR") return;
 
-function evaluate() {
-  const original = calcExpr;
+  let expression = calcExpr
+    .replaceAll("×", "*")
+    .replaceAll("÷", "/")
+    .replaceAll("−", "-");
 
-  if (!original || original === "ERROR") {
-    return;
-  }
-
-  let expr = original;
-
-  for (const key of Object.keys(MAPPING)) {
-    expr = expr.split(key).join(MAPPING[key]);
-  }
-
-  if (!/^[0-9+\-*/().\s]+$/.test(expr)) {
-    calcExpr = "ERROR";
-    renderDisplay();
-    return;
-  }
-
-  if (expr.includes("**") || expr.includes("//")) {
+  if (!/^[0-9+\-*/().\s]+$/.test(expression)) {
     calcExpr = "ERROR";
     renderDisplay();
     return;
@@ -84,14 +60,12 @@ function evaluate() {
 
   try {
     const result = Function(
-      `"use strict"; return (${expr});`
+      '"use strict"; return (' + expression + ')'
     )();
 
-    if (typeof result !== "number" || !Number.isFinite(result)) {
-      throw new Error("Invalid result");
-    }
+    if (!Number.isFinite(result)) throw new Error();
 
-    history.push(`${original} = ${result}`);
+    history.push(calcExpr + " = " + result);
     calcExpr = String(result);
 
   } catch {
@@ -101,28 +75,28 @@ function evaluate() {
   renderDisplay();
 }
 
-document.querySelectorAll(".key").forEach((key) => {
-  key.addEventListener("click", () => {
-    const k = key.dataset.k;
+document.querySelectorAll(".key").forEach((button) => {
+  button.addEventListener("click", () => {
 
-    if (k === "C") {
+    const key = button.dataset.k;
+
+    if (key === "C") {
       calcExpr = "";
       renderDisplay();
 
-    } else if (k === "⌫") {
+    } else if (key === "⌫") {
       if (calcExpr === "ERROR") {
         calcExpr = "";
       } else {
         calcExpr = calcExpr.slice(0, -1);
       }
-
       renderDisplay();
 
-    } else if (k === "=") {
-      evaluate();
+    } else if (key === "=") {
+      calculate();
 
     } else {
-      appendKey(k);
+      addKey(key);
     }
   });
 });
@@ -132,21 +106,28 @@ document.querySelectorAll(".key").forEach((key) => {
 ========================= */
 
 $("btn-history").addEventListener("click", () => {
-  $("history-list").replaceChildren();
+
+  const list = $("history-list");
+  list.replaceChildren();
 
   if (history.length === 0) {
-    const p = document.createElement("div");
-    p.className = "history-item history-empty";
-    p.textContent = "No calculations yet.";
-    $("history-list").appendChild(p);
+
+    const empty = document.createElement("div");
+    empty.className = "history-item";
+    empty.textContent = "No calculations yet.";
+
+    list.appendChild(empty);
 
   } else {
-    for (let i = history.length - 1; i >= 0; i--) {
-      const p = document.createElement("div");
-      p.className = "history-item";
-      p.textContent = history[i];
-      $("history-list").appendChild(p);
-    }
+
+    history.slice().reverse().forEach((item) => {
+
+      const row = document.createElement("div");
+      row.className = "history-item";
+      row.textContent = item;
+
+      list.appendChild(row);
+    });
   }
 
   show("history");
@@ -154,6 +135,7 @@ $("btn-history").addEventListener("click", () => {
 
 $("btn-clear-history").addEventListener("click", () => {
   history = [];
+
   $("btn-history").click();
 });
 
@@ -162,22 +144,24 @@ $("btn-back-calc").addEventListener("click", () => {
 });
 
 /* =========================
-   PRIVATE VAULT
+   VAULT LOGIN
 ========================= */
 
 $("btn-vault").addEventListener("click", () => {
 
-  const hasPin = localStorage.getItem(PIN_KEY);
+  const savedPin = localStorage.getItem(PIN_KEY);
 
-  if (!hasPin) {
-    $("pin-input").value = "";
+  $("pin-input").value = "";
+
+  if (!savedPin) {
+
     $("pin-input").placeholder = "Create PIN";
     $("btn-open").textContent = "🔐 CREATE PIN";
     $("login-msg").textContent =
-      "First time? Create your private PIN.";
+      "First time? Create a PIN of at least 4 digits.";
 
   } else {
-    $("pin-input").value = "";
+
     $("pin-input").placeholder = "Enter PIN";
     $("btn-open").textContent = "🔓 OPEN VAULT";
     $("login-msg").textContent = "";
@@ -187,70 +171,69 @@ $("btn-vault").addEventListener("click", () => {
 });
 
 $("btn-back-login").addEventListener("click", () => {
+
   $("pin-input").value = "";
   $("login-msg").textContent = "";
+
   show("calc");
 });
 
-/* =========================
-   CREATE / ENTER PIN
-========================= */
+function handlePin() {
 
-function submitPin() {
-
-  const enteredPin = $("pin-input").value.trim();
-  const msg = $("login-msg");
-
+  const entered = $("pin-input").value.trim();
   const savedPin = localStorage.getItem(PIN_KEY);
 
-  /* FIRST TIME */
+  /* CREATE PIN */
 
   if (!savedPin) {
 
-    if (!/^\d+$/.test(enteredPin) || enteredPin.length < 4) {
-      msg.textContent = "❌ PIN MUST BE AT LEAST 4 DIGITS";
+    if (!/^\d{4,}$/.test(entered)) {
+
+      $("login-msg").textContent =
+        "❌ PIN must contain at least 4 digits.";
+
       return;
     }
 
-    localStorage.setItem(PIN_KEY, enteredPin);
-    pin = enteredPin;
-
-    msg.textContent = "✅ PIN CREATED";
+    localStorage.setItem(PIN_KEY, entered);
+    pin = entered;
 
     $("pin-input").value = "";
+    $("login-msg").textContent = "✅ PIN CREATED";
 
     setTimeout(() => {
-      show("vault");
       renderVault();
+      show("vault");
     }, 300);
 
     return;
   }
 
-  /* EXISTING USER */
+  /* ENTER PIN */
 
-  if (enteredPin === savedPin) {
+  if (entered === savedPin) {
 
     pin = savedPin;
 
     $("pin-input").value = "";
-    msg.textContent = "";
+    $("login-msg").textContent = "";
 
-    show("vault");
     renderVault();
+    show("vault");
 
   } else {
 
-    msg.textContent = "❌ WRONG PIN";
+    $("login-msg").textContent = "❌ WRONG PIN";
     $("pin-input").value = "";
   }
 }
 
-$("btn-open").addEventListener("click", submitPin);
+$("btn-open").addEventListener("click", handlePin);
 
-$("pin-input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    submitPin();
+$("pin-input").addEventListener("keydown", (event) => {
+
+  if (event.key === "Enter") {
+    handlePin();
   }
 });
 
@@ -263,7 +246,7 @@ $("btn-lock").addEventListener("click", () => {
 });
 
 /* =========================
-   VAULT PHOTOS
+   VAULT
 ========================= */
 
 function savePhotos() {
@@ -272,159 +255,80 @@ function savePhotos() {
 
 function renderVault() {
 
-  $("vault-grid").replaceChildren();
+  const grid = $("vault-grid");
+  grid.replaceChildren();
 
   if (photos.length === 0) {
 
-    const p = document.createElement("div");
+    const empty = document.createElement("div");
+    empty.className = "photo-empty";
+    empty.textContent = "No photos yet. Tap ADD PHOTO.";
 
-    p.className = "photo-empty";
-    p.textContent = "No photos yet.";
-
-    $("vault-grid").appendChild(p);
-
+    grid.appendChild(empty);
     return;
   }
 
-  for (const src of photos) {
+  photos.forEach((photo, index) => {
 
-    const card = document.createElement("button");
-
+    const card = document.createElement("div");
     card.className = "photo-card";
 
-    const img = document.createElement("img");
+    const image = document.createElement("img");
 
-    img.src = src;
-    img.alt = "vault photo";
+    image.src = photo;
+    image.alt = "Private photo";
+    image.loading = "lazy";
 
-    card.appendChild(img);
-
-    card.addEventListener("click", () => {
-      openPhoto(src);
+    image.addEventListener("click", () => {
+      $("photo-full").src = photo;
+      show("photo");
     });
 
-    $("vault-grid").appendChild(card);
-  }
+    card.appendChild(image);
+
+    grid.appendChild(card);
+  });
 }
 
-function openPhoto(src) {
-
-  $("photo-full").src = src;
-
-  show("photo");
-}
-
-$("btn-photo-back").addEventListener("click", () => {
-
-  $("photo-full").src = "";
-
-  renderVault();
-
-  show("vault");
-});
+/* =========================
+   ADD PHOTO
+========================= */
 
 $("btn-add").addEventListener("click", () => {
 
-  $("file-input").click();
+  const picker = $("file-input");
+
+  picker.value = "";
+
+  picker.click();
 });
 
-$("file-input").addEventListener("change", (e) => {
+$("file-input").addEventListener("change", (event) => {
 
-  const file = e.target.files[0];
+  const files = Array.from(event.target.files || []);
 
-  e.target.value = "";
+  if (files.length === 0) return;
 
-  if (!file) {
-    return;
-  }
+  let remaining = files.length;
 
-  const reader = new FileReader();
+  files.forEach((file) => {
 
-  reader.onload = () => {
+    if (!file.type.startsWith("image/")) {
 
-    if (!photos.includes(reader.result)) {
-      photos.push(reader.result);
+      remaining--;
+
+      return;
     }
 
-    savePhotos();
+    const reader = new FileReader();
 
-    renderVault();
+    reader.onload = () => {
 
-    show("vault");
-  };
+      photos.push(reader.result);
 
-  reader.readAsDataURL(file);
-});
+      remaining--;
 
-/* =========================
-   CHANGE PIN
-========================= */
+      if (remaining <= 0) {
 
-$("btn-change-pin").addEventListener("click", () => {
-
-  $("cp-old").value = "";
-  $("cp-new").value = "";
-  $("cp-confirm").value = "";
-  $("cp-msg").textContent = "";
-
-  show("changepin");
-});
-
-$("btn-save-pin").addEventListener("click", () => {
-
-  const msg = $("cp-msg");
-
-  const oldPin = $("cp-old").value.trim();
-  const newPin = $("cp-new").value.trim();
-  const confirmPin = $("cp-confirm").value.trim();
-
-  const savedPin = localStorage.getItem(PIN_KEY);
-
-  if (oldPin !== savedPin) {
-
-    msg.textContent = "❌ CURRENT PIN IS WRONG";
-
-    return;
-  }
-
-  if (!/^\d+$/.test(newPin) || newPin.length < 4) {
-
-    msg.textContent = "❌ PIN MUST BE AT LEAST 4 DIGITS";
-
-    return;
-  }
-
-  if (newPin !== confirmPin) {
-
-    msg.textContent = "❌ NEW PINS DON'T MATCH";
-
-    return;
-  }
-
-  localStorage.setItem(PIN_KEY, newPin);
-
-  pin = newPin;
-
-  msg.textContent = "✅ PIN CHANGED SUCCESSFULLY";
-
-  msg.style.color = "#0db76d";
-
-  $("cp-old").value = "";
-  $("cp-new").value = "";
-  $("cp-confirm").value = "";
-});
-
-$("btn-back-vault").addEventListener("click", () => {
-
-  renderVault();
-
-  show("vault");
-});
-
-/* =========================
-   START APP
-========================= */
-
-renderDisplay();
-renderVault();
-show("calc");
+        savePhotos();
+        render
