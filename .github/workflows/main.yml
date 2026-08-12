@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -18,9 +19,7 @@ jobs:
           java-version: "17"
 
       - name: Create Android project
-        shell: bash
         run: |
-          set -e
 
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/faizantedwa/vaultcalc
@@ -31,8 +30,16 @@ jobs:
           cp app.js app/src/main/assets/app.js
           cp styles.css app/src/main/assets/styles.css
 
-          # Custom app icon
-          cp icon.png app/src/main/res/drawable/app_icon.png
+
+          # ICON
+          # अगर icon.png मौजूद है तो उसे APK में डालो
+          if [ -f "icon.png" ]; then
+            cp icon.png app/src/main/res/drawable/app_icon.png
+            ICON_LINE='android:icon="@drawable/app_icon"'
+          else
+            ICON_LINE=''
+          fi
+
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -45,6 +52,7 @@ jobs:
 
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
               repositories {
                   google()
                   mavenCentral()
@@ -52,14 +60,17 @@ jobs:
           }
 
           rootProject.name = "VaultCalc"
+
           include(":app")
           EOF
+
 
           cat > build.gradle <<'EOF'
           plugins {
               id 'com.android.application' version '8.7.3' apply false
           }
           EOF
+
 
           cat > app/build.gradle <<'EOF'
           plugins {
@@ -68,44 +79,59 @@ jobs:
 
           android {
               namespace 'com.faizantedwa.vaultcalc'
+
               compileSdk 35
 
               defaultConfig {
                   applicationId "com.faizantedwa.vaultcalc"
+
                   minSdk 23
+
                   targetSdk 35
+
                   versionCode 1
+
                   versionName "1.0"
               }
           }
           EOF
 
+
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <resources>
-              <style name="AppTheme"
+
+              <style
+                  name="AppTheme"
                   parent="android:style/Theme.Material.Light.NoActionBar">
+
               </style>
+
           </resources>
           EOF
 
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
+
+          cat > app/src/main/AndroidManifest.xml <<EOF
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <application
                   android:theme="@style/AppTheme"
                   android:label="Vault Calc"
-                  android:icon="@drawable/app_icon"
-                  android:roundIcon="@drawable/app_icon"
+                  $ICON_LINE
                   android:usesCleartextTraffic="true">
 
                   <activity
                       android:name=".MainActivity"
-                      android:exported="true"
-                      android:screenOrientation="portrait">
+                      android:screenOrientation="portrait"
+                      android:exported="true">
 
                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
+
+                          <action
+                              android:name="android.intent.action.MAIN" />
+
+                          <category
+                              android:name="android.intent.category.LAUNCHER" />
+
                       </intent-filter>
 
                   </activity>
@@ -114,6 +140,7 @@ jobs:
 
           </manifest>
           EOF
+
 
           cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'EOF'
           package com.faizantedwa.vaultcalc;
@@ -131,50 +158,71 @@ jobs:
           public class MainActivity extends Activity {
 
               private WebView webView;
+
               private ValueCallback<Uri[]> fileCallback;
 
               private static final int FILE_REQUEST = 1001;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
+
                   super.onCreate(savedInstanceState);
 
                   webView = new WebView(this);
 
-                  WebSettings settings = webView.getSettings();
+                  WebSettings settings =
+                          webView.getSettings();
+
                   settings.setJavaScriptEnabled(true);
+
                   settings.setDomStorageEnabled(true);
+
                   settings.setAllowFileAccess(true);
+
                   settings.setAllowContentAccess(true);
 
-                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebViewClient(
+                          new WebViewClient()
+                  );
 
-                  webView.setWebChromeClient(new WebChromeClient() {
-                      @Override
-                      public boolean onShowFileChooser(
-                              WebView view,
-                              ValueCallback<Uri[]> callback,
-                              FileChooserParams params) {
+                  webView.setWebChromeClient(
+                          new WebChromeClient() {
 
-                          if (fileCallback != null) {
-                              fileCallback.onReceiveValue(null);
+                              @Override
+                              public boolean onShowFileChooser(
+                                      WebView view,
+                                      ValueCallback<Uri[]> callback,
+                                      FileChooserParams params) {
+
+                                  if (fileCallback != null) {
+
+                                      fileCallback
+                                              .onReceiveValue(null);
+                                  }
+
+                                  fileCallback = callback;
+
+                                  try {
+
+                                      Intent intent =
+                                              params.createIntent();
+
+                                      startActivityForResult(
+                                              intent,
+                                              FILE_REQUEST
+                                      );
+
+                                      return true;
+
+                                  } catch (Exception e) {
+
+                                      fileCallback = null;
+
+                                      return false;
+                                  }
+                              }
                           }
-
-                          fileCallback = callback;
-
-                          try {
-                              Intent intent = params.createIntent();
-                              startActivityForResult(
-                                      intent,
-                                      FILE_REQUEST
-                              );
-                              return true;
-                          } catch (Exception e) {
-                              fileCallback = null;
-                              return false;
-                          }
-                      }
-                  });
+                  );
 
                   setContentView(webView);
 
@@ -201,44 +249,69 @@ jobs:
 
                   Uri[] results = null;
 
-                  if (resultCode == RESULT_OK && data != null) {
+                  if (
+                      resultCode == RESULT_OK &&
+                      data != null
+                  ) {
 
                       if (data.getClipData() != null) {
 
                           int count =
-                                  data.getClipData().getItemCount();
+                                  data.getClipData()
+                                      .getItemCount();
 
-                          results = new Uri[count];
+                          results =
+                                  new Uri[count];
 
-                          for (int i = 0; i < count; i++) {
+                          for (
+                              int i = 0;
+                              i < count;
+                              i++
+                          ) {
+
                               results[i] =
                                       data.getClipData()
-                                              .getItemAt(i)
-                                              .getUri();
+                                          .getItemAt(i)
+                                          .getUri();
                           }
 
-                      } else if (data.getData() != null) {
+                      } else if (
+                          data.getData() != null
+                      ) {
 
-                          results = new Uri[] {
-                                  data.getData()
-                          };
+                          results =
+                                  new Uri[] {
+                                      data.getData()
+                                  };
                       }
                   }
 
                   if (fileCallback != null) {
-                      fileCallback.onReceiveValue(results);
+
+                      fileCallback
+                              .onReceiveValue(results);
+
                       fileCallback = null;
                   }
               }
           }
           EOF
 
+
+      - name: Build APK
+        run: |
+
           gradle wrapper --gradle-version 8.9
+
           chmod +x gradlew
+
           ./gradlew assembleDebug
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+
         with:
           name: VaultCalc-APK
+
           path: app/build/outputs/apk/debug/app-debug.apk
