@@ -21,20 +21,19 @@ jobs:
 
 
       - name: Create Android project
+        shell: bash
         run: |
+
+          set -e
 
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/faizantedwa/vaultcalc
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
 
-
           cp index.html app/src/main/assets/index.html
           cp app.js app/src/main/assets/app.js
           cp styles.css app/src/main/assets/styles.css
-
-
-          # APP ICON
 
           if [ -f "icon.png" ]; then
             cp icon.png app/src/main/res/drawable/app_icon.png
@@ -44,9 +43,7 @@ jobs:
           fi
 
 
-          # SETTINGS
-
-          cat > settings.gradle <<'EOF'
+          cat > settings.gradle <<'SETTINGS_EOF'
           pluginManagement {
               repositories {
                   google()
@@ -57,7 +54,6 @@ jobs:
 
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
               repositories {
                   google()
                   mavenCentral()
@@ -65,72 +61,54 @@ jobs:
           }
 
           rootProject.name = "VaultCalc"
-
           include(":app")
-          EOF
+          SETTINGS_EOF
 
 
-          # ROOT BUILD
-
-          cat > build.gradle <<'EOF'
+          cat > build.gradle <<'ROOT_EOF'
           plugins {
               id 'com.android.application' version '8.7.3' apply false
           }
-          EOF
+          ROOT_EOF
 
 
-          # APP BUILD
-
-          cat > app/build.gradle <<'EOF'
+          cat > app/build.gradle <<'APP_EOF'
           plugins {
               id 'com.android.application'
           }
 
           android {
               namespace 'com.faizantedwa.vaultcalc'
-
               compileSdk 35
 
               defaultConfig {
                   applicationId "com.faizantedwa.vaultcalc"
-
                   minSdk 23
-
                   targetSdk 35
-
                   versionCode 1
-
                   versionName "1.0"
               }
           }
-          EOF
+          APP_EOF
 
 
-          # STYLE
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
+          cat > app/src/main/res/values/styles.xml <<'STYLE_EOF'
           <resources>
-
               <style
                   name="AppTheme"
                   parent="android:style/Theme.Material.Light.NoActionBar">
-
               </style>
-
           </resources>
-          EOF
+          STYLE_EOF
 
 
-          # MANIFEST
-
-          cat > app/src/main/AndroidManifest.xml <<EOF
+          cat > app/src/main/AndroidManifest.xml <<MANIFEST_EOF
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <application
                   android:theme="@style/AppTheme"
                   android:label="Vault Calc"
                   $ICON_LINE
-                  android:usesCleartextTraffic="true"
                   android:allowBackup="false"
                   android:supportsRtl="true">
 
@@ -140,13 +118,8 @@ jobs:
                       android:exported="true">
 
                       <intent-filter>
-
-                          <action
-                              android:name="android.intent.action.MAIN" />
-
-                          <category
-                              android:name="android.intent.category.LAUNCHER" />
-
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
 
                   </activity>
@@ -154,42 +127,36 @@ jobs:
               </application>
 
           </manifest>
-          EOF
+          MANIFEST_EOF
 
 
-          # MAIN ACTIVITY
-
-          cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'EOF'
+          cat > app/src/main/java/com/faizantedwa/vaultcalc/MainActivity.java <<'JAVA_EOF'
           package com.faizantedwa.vaultcalc;
 
           import android.app.Activity;
+          import android.app.PendingIntent;
           import android.os.Bundle;
-
           import android.content.Intent;
           import android.net.Uri;
-
           import android.webkit.JavascriptInterface;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
-
           import android.util.Base64;
 
           import java.io.File;
           import java.io.FileOutputStream;
-
           import java.util.ArrayList;
-
 
           public class MainActivity extends Activity {
 
               private WebView webView;
-
               private ValueCallback<Uri[]> fileCallback;
 
               private static final int FILE_REQUEST = 1001;
+              private static final int DELETE_REQUEST = 2001;
 
               private final ArrayList<Uri> selectedUris =
                       new ArrayList<>();
@@ -202,22 +169,20 @@ jobs:
 
                   webView = new WebView(this);
 
-                  WebSettings settings =
-                          webView.getSettings();
+                  WebSettings settings = webView.getSettings();
 
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
 
-                  webView.setWebViewClient(
-                          new WebViewClient()
-                  );
+                  webView.setWebViewClient(new WebViewClient());
 
                   webView.addJavascriptInterface(
                           new VaultBridge(),
                           "VaultAndroid"
                   );
+
 
                   webView.setWebChromeClient(
                           new WebChromeClient() {
@@ -233,7 +198,6 @@ jobs:
                                   }
 
                                   fileCallback = callback;
-
                                   selectedUris.clear();
 
                                   Intent intent =
@@ -264,12 +228,12 @@ jobs:
                                   } catch (Exception e) {
 
                                       fileCallback = null;
-
                                       return false;
                                   }
                               }
                           }
                   );
+
 
                   setContentView(webView);
 
@@ -279,11 +243,24 @@ jobs:
               }
 
 
-              /*
-               * ANDROID BACK BUTTON
-               */
-
               @Override
               public void onBackPressed() {
 
-                 
+                  if (webView != null) {
+
+                      webView.evaluateJavascript(
+                              "if(window.handleAndroidBack){" +
+                              "window.handleAndroidBack();" +
+                              "}",
+                              null
+                      );
+
+                  } else {
+
+                      super.onBackPressed();
+                  }
+              }
+
+
+              @Override
+              protected
