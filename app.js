@@ -1,240 +1,146 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    /* ==============================
-       HELPERS
-    ============================== */
-
     function get(id) {
         return document.getElementById(id);
     }
 
-    var screens = [
-        "screen-calculator",
-        "screen-history",
-        "screen-login",
-        "screen-vault",
-        "screen-changepin",
-        "screen-photo"
-    ];
-
     function showScreen(id) {
+        var screens = [
+            "screen-calculator",
+            "screen-history",
+            "screen-login",
+            "screen-vault",
+            "screen-changepin",
+            "screen-photo"
+        ];
 
         for (var i = 0; i < screens.length; i++) {
-
-            var element = get(screens[i]);
-
-            if (!element) {
-                continue;
-            }
-
-            if (screens[i] === id) {
-                element.classList.remove("hidden");
-            } else {
-                element.classList.add("hidden");
+            var el = get(screens[i]);
+            if (el) {
+                el.classList.toggle("hidden", screens[i] !== id);
             }
         }
-
-        window.currentScreen = id;
     }
 
-
-    window.currentScreen =
-        "screen-calculator";
-
-
-    /* ==============================
+    /* =========================
        CALCULATOR
-    ============================== */
+    ========================= */
 
     var display = get("display");
-
     var expression = "";
-
     var history = [];
 
-
     function updateDisplay() {
-
-        if (!display) {
-            return;
+        if (display) {
+            display.textContent =
+                expression === "" ? "0" : expression;
         }
-
-        display.textContent =
-            expression === ""
-                ? "0"
-                : expression;
     }
 
-
     function addToCalculator(value) {
-
         if (expression === "ERROR") {
             expression = "";
         }
 
         expression += value;
-
         updateDisplay();
     }
-
 
     function clearCalculator() {
-
         expression = "";
-
         updateDisplay();
     }
 
-
     function deleteLast() {
-
         if (expression === "ERROR") {
-
             expression = "";
-
         } else {
-
             expression =
-                expression.substring(
-                    0,
-                    expression.length - 1
-                );
+                expression.substring(0, expression.length - 1);
         }
 
         updateDisplay();
     }
-
 
     function calculateResult() {
 
-        if (
-            expression === "" ||
-            expression === "ERROR"
-        ) {
+        if (!expression || expression === "ERROR") {
             return;
         }
 
-        var original =
-            expression;
+        var original = expression;
 
-        var math =
-            expression
-                .split("×").join("*")
-                .split("÷").join("/")
-                .split("−").join("-");
-
+        var math = expression
+            .replace(/×/g, "*")
+            .replace(/÷/g, "/")
+            .replace(/−/g, "-");
 
         if (!/^[0-9+\-*/(). ]+$/.test(math)) {
-
             expression = "ERROR";
-
             updateDisplay();
-
             return;
         }
-
 
         try {
 
-            var result =
-                Function(
-                    "return (" +
-                    math +
-                    ")"
-                )();
-
+            var result = Function(
+                "return (" + math + ")"
+            )();
 
             if (!isFinite(result)) {
-                throw new Error(
-                    "Invalid result"
-                );
+                throw new Error();
             }
 
-
             history.push(
-                original +
-                " = " +
-                result
+                original + " = " + result
             );
 
+            expression = String(result);
 
-            expression =
-                String(result);
-
-
-        } catch (error) {
+        } catch (e) {
 
             expression = "ERROR";
         }
-
 
         updateDisplay();
     }
 
-
     var calculatorButtons =
-        document.querySelectorAll(
-            ".key"
-        );
+        document.querySelectorAll(".key");
 
+    for (var i = 0; i < calculatorButtons.length; i++) {
 
-    for (
-        var i = 0;
-        i < calculatorButtons.length;
-        i++
-    ) {
+        calculatorButtons[i].addEventListener(
+            "click",
+            function () {
 
-        calculatorButtons[i]
-            .addEventListener(
-                "click",
-                function () {
+                var value =
+                    this.getAttribute("data-k");
 
-                    var value =
-                        this.getAttribute(
-                            "data-k"
-                        );
-
-
-                    if (value === "C") {
-
-                        clearCalculator();
-
-                    } else if (
-                        value === "⌫"
-                    ) {
-
-                        deleteLast();
-
-                    } else if (
-                        value === "="
-                    ) {
-
-                        calculateResult();
-
-                    } else {
-
-                        addToCalculator(
-                            value
-                        );
-                    }
+                if (value === "C") {
+                    clearCalculator();
                 }
-            );
+                else if (value === "⌫") {
+                    deleteLast();
+                }
+                else if (value === "=") {
+                    calculateResult();
+                }
+                else {
+                    addToCalculator(value);
+                }
+            }
+        );
     }
 
-
-    /* ==============================
+    /* =========================
        HISTORY
-    ============================== */
+    ========================= */
 
-    var historyButton =
-        get("btn-history");
-
-    var historyList =
-        get("history-list");
-
+    var historyButton = get("btn-history");
+    var historyList = get("history-list");
     var clearHistoryButton =
         get("btn-clear-history");
-
 
     if (historyButton) {
 
@@ -242,72 +148,49 @@ document.addEventListener("DOMContentLoaded", function () {
             "click",
             function () {
 
-                if (!historyList) {
+                if (historyList) {
 
-                    showScreen(
-                        "screen-history"
-                    );
+                    historyList.innerHTML = "";
 
-                    return;
-                }
+                    if (history.length === 0) {
 
+                        var empty =
+                            document.createElement("div");
 
-                historyList.innerHTML = "";
-
-
-                if (
-                    history.length === 0
-                ) {
-
-                    var empty =
-                        document.createElement(
-                            "div"
-                        );
-
-                    empty.className =
-                        "history-item";
-
-                    empty.textContent =
-                        "No calculations yet.";
-
-                    historyList.appendChild(
-                        empty
-                    );
-
-                } else {
-
-                    for (
-                        var h =
-                            history.length - 1;
-                        h >= 0;
-                        h--
-                    ) {
-
-                        var item =
-                            document.createElement(
-                                "div"
-                            );
-
-                        item.className =
+                        empty.className =
                             "history-item";
 
-                        item.textContent =
-                            history[h];
+                        empty.textContent =
+                            "No calculations yet.";
 
-                        historyList.appendChild(
-                            item
-                        );
+                        historyList.appendChild(empty);
+
+                    } else {
+
+                        for (
+                            var h = history.length - 1;
+                            h >= 0;
+                            h--
+                        ) {
+
+                            var item =
+                                document.createElement("div");
+
+                            item.className =
+                                "history-item";
+
+                            item.textContent =
+                                history[h];
+
+                            historyList.appendChild(item);
+                        }
                     }
                 }
 
-
-                showScreen(
-                    "screen-history"
-                );
+                showScreen("screen-history");
             }
         );
     }
-
 
     if (clearHistoryButton) {
 
@@ -324,64 +207,40 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-
     var backCalculator =
         get("btn-back-calc");
-
 
     if (backCalculator) {
 
         backCalculator.addEventListener(
             "click",
             function () {
-
-                showScreen(
-                    "screen-calculator"
-                );
+                showScreen("screen-calculator");
             }
         );
     }
 
-
-    /* ==============================
+    /* =========================
        PIN
-    ============================== */
+    ========================= */
 
-    var PIN_KEY =
-        "vault_calc_user_pin";
-
+    var PIN_KEY = "vault_calc_user_pin";
 
     var savedPin =
-        localStorage.getItem(
-            PIN_KEY
-        ) || "";
+        localStorage.getItem(PIN_KEY) || "";
 
-
-    var vaultButton =
-        get("btn-vault");
-
-    var pinInput =
-        get("pin-input");
-
-    var openButton =
-        get("btn-open");
-
-    var loginMessage =
-        get("login-msg");
-
+    var vaultButton = get("btn-vault");
+    var pinInput = get("pin-input");
+    var openButton = get("btn-open");
+    var loginMessage = get("login-msg");
 
     function preparePinScreen() {
 
-        if (
-            !pinInput ||
-            !openButton
-        ) {
+        if (!pinInput || !openButton) {
             return;
         }
 
-
         pinInput.value = "";
-
 
         if (savedPin === "") {
 
@@ -391,9 +250,7 @@ document.addEventListener("DOMContentLoaded", function () {
             openButton.textContent =
                 "🔐 CREATE PIN";
 
-
             if (loginMessage) {
-
                 loginMessage.textContent =
                     "Create a PIN with at least 4 digits.";
             }
@@ -406,32 +263,23 @@ document.addEventListener("DOMContentLoaded", function () {
             openButton.textContent =
                 "🔓 OPEN VAULT";
 
-
             if (loginMessage) {
-
-                loginMessage.textContent =
-                    "";
+                loginMessage.textContent = "";
             }
         }
 
-
-        showScreen(
-            "screen-login"
-        );
+        showScreen("screen-login");
     }
-
 
     if (vaultButton) {
 
         vaultButton.addEventListener(
             "click",
             function () {
-
                 preparePinScreen();
             }
         );
     }
-
 
     function handlePin() {
 
@@ -439,21 +287,14 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-
         var entered =
             pinInput.value;
 
-
         if (savedPin === "") {
 
-            if (
-                !/^[0-9]{4,}$/.test(
-                    entered
-                )
-            ) {
+            if (!/^[0-9]{4,}$/.test(entered)) {
 
                 if (loginMessage) {
-
                     loginMessage.textContent =
                         "❌ PIN must contain at least 4 digits.";
                 }
@@ -461,65 +302,40 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-
-            savedPin =
-                entered;
-
+            savedPin = entered;
 
             localStorage.setItem(
                 PIN_KEY,
                 savedPin
             );
 
-
             pinInput.value = "";
-
 
             renderVault();
 
-
-            showScreen(
-                "screen-vault"
-            );
-
+            showScreen("screen-vault");
 
             return;
         }
 
-
-        if (
-            entered === savedPin
-        ) {
+        if (entered === savedPin) {
 
             pinInput.value = "";
 
-
-            if (loginMessage) {
-                loginMessage.textContent =
-                    "";
-            }
-
-
             renderVault();
 
-
-            showScreen(
-                "screen-vault"
-            );
+            showScreen("screen-vault");
 
         } else {
 
             pinInput.value = "";
 
-
             if (loginMessage) {
-
                 loginMessage.textContent =
                     "❌ WRONG PIN";
             }
         }
     }
-
 
     if (openButton) {
 
@@ -529,78 +345,58 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-
     if (pinInput) {
 
         pinInput.addEventListener(
             "keydown",
             function (event) {
 
-                if (
-                    event.key === "Enter"
-                ) {
-
+                if (event.key === "Enter") {
                     handlePin();
                 }
             }
         );
     }
 
-
     var backLogin =
         get("btn-back-login");
-
 
     if (backLogin) {
 
         backLogin.addEventListener(
             "click",
             function () {
-
-                showScreen(
-                    "screen-calculator"
-                );
+                showScreen("screen-calculator");
             }
         );
     }
 
-
-    /* ==============================
-       PHOTO STORAGE
-    ============================== */
+    /* =========================
+       PRIVATE VAULT STORAGE
+    ========================= */
 
     var PHOTOS_KEY =
         "vault_calc_private_photos";
 
-
     var photos = [];
-
 
     try {
 
         var stored =
-            localStorage.getItem(
-                PHOTOS_KEY
-            );
-
+            localStorage.getItem(PHOTOS_KEY);
 
         if (stored) {
-
-            photos =
-                JSON.parse(stored);
+            photos = JSON.parse(stored);
         }
 
-
         if (!Array.isArray(photos)) {
-
             photos = [];
         }
 
-    } catch (error) {
+    } catch (e) {
 
         photos = [];
     }
-
 
     function savePhotos() {
 
@@ -611,71 +407,57 @@ document.addEventListener("DOMContentLoaded", function () {
                 JSON.stringify(photos)
             );
 
-        } catch (error) {
+        } catch (e) {
 
             alert(
-                "Vault storage is full. Delete some photos first."
+                "Storage full. Please delete some photos."
             );
         }
     }
 
-
-    /* ==============================
-       VAULT RENDER
-    ============================== */
+    /* =========================
+       RENDER VAULT
+    ========================= */
 
     function renderVault() {
 
         var grid =
             get("vault-grid");
 
-
         if (!grid) {
             return;
         }
 
-
         grid.innerHTML = "";
-
 
         if (photos.length === 0) {
 
             var empty =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             empty.className =
                 "photo-empty";
 
-
             empty.textContent =
-                "No photos yet. Tap ADD PHOTOS.";
+                "No private photos yet.";
 
-
-            grid.appendChild(
-                empty
-            );
-
+            grid.appendChild(empty);
 
             return;
         }
 
-
         for (
-            var p = 0;
-            p < photos.length;
-            p++
+            var i = 0;
+            i < photos.length;
+            i++
         ) {
 
             createPhotoCard(
-                photos[p],
-                p
+                photos[i],
+                i
             );
         }
     }
-
 
     function createPhotoCard(
         photo,
@@ -685,35 +467,24 @@ document.addEventListener("DOMContentLoaded", function () {
         var grid =
             get("vault-grid");
 
-
         if (!grid) {
             return;
         }
 
-
         var card =
-            document.createElement(
-                "div"
-            );
-
+            document.createElement("div");
 
         card.className =
             "photo-card";
 
-
         var image =
-            document.createElement(
-                "img"
-            );
-
+            document.createElement("img");
 
         image.src =
             photo.data;
 
-
         image.alt =
             "Private photo";
-
 
         image.addEventListener(
             "click",
@@ -722,43 +493,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 var full =
                     get("photo-full");
 
-
                 if (full) {
-
-                    full.src =
-                        photo.data;
+                    full.src = photo.data;
                 }
 
-
-                window.selectedPhotoIndex =
-                    index;
-
-
-                showScreen(
-                    "screen-photo"
-                );
+                showScreen("screen-photo");
             }
         );
 
-
-        card.appendChild(
-            image
-        );
-
+        card.appendChild(image);
 
         var deleteButton =
-            document.createElement(
-                "button"
-            );
-
+            document.createElement("button");
 
         deleteButton.className =
             "photo-delete";
 
-
         deleteButton.textContent =
             "DELETE";
-
 
         deleteButton.addEventListener(
             "click",
@@ -766,37 +518,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 event.stopPropagation();
 
-
                 if (
-                    !confirm(
-                        "Delete this photo from the Private Vault?"
+                    confirm(
+                        "Remove this photo from the vault?"
                     )
                 ) {
-                    return;
+
+                    if (
+                        window.VaultAndroid &&
+                        photo.androidPath
+                    ) {
+
+                        window.VaultAndroid
+                            .deleteVaultPhoto(
+                                photo.androidPath
+                            );
+                    }
+
+                    photos.splice(
+                        index,
+                        1
+                    );
+
+                    savePhotos();
+
+                    renderVault();
                 }
-
-
-                deletePrivatePhoto(
-                    index
-                );
             }
         );
-
 
         card.appendChild(
             deleteButton
         );
 
-
-        grid.appendChild(
-            card
-        );
+        grid.appendChild(card);
     }
 
-
-    /* ==============================
+    /* =========================
        ADD MULTIPLE PHOTOS
-    ============================== */
+    ========================= */
 
     var addPhotoButton =
         get("btn-add");
@@ -804,6 +564,18 @@ document.addEventListener("DOMContentLoaded", function () {
     var fileInput =
         get("file-input");
 
+    if (fileInput) {
+
+        fileInput.setAttribute(
+            "multiple",
+            "multiple"
+        );
+
+        fileInput.setAttribute(
+            "accept",
+            "image/*"
+        );
+    }
 
     if (addPhotoButton) {
 
@@ -814,21 +586,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!fileInput) {
 
                     alert(
-                        "Photo picker is unavailable."
+                        "Photo picker unavailable."
                     );
 
                     return;
                 }
 
-
                 fileInput.value = "";
-
 
                 fileInput.click();
             }
         );
     }
-
 
     if (fileInput) {
 
@@ -839,7 +608,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 var files =
                     this.files;
 
-
                 if (
                     !files ||
                     files.length === 0
@@ -847,49 +615,68 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-
                 var total =
                     files.length;
 
-                var completed =
-                    0;
+                var completed = 0;
 
+                var added = 0;
 
                 for (
-                    var f = 0;
-                    f < files.length;
-                    f++
+                    var i = 0;
+                    i < total;
+                    i++
                 ) {
 
                     readPhoto(
-                        files[f],
-                        function () {
+                        files[i],
+                        function (photo) {
 
                             completed++;
 
+                            if (photo) {
+                                photos.push(photo);
+                                added++;
+                            }
 
                             if (
-                                completed ===
-                                total
+                                completed === total
                             ) {
 
                                 savePhotos();
 
                                 renderVault();
 
+                                showScreen(
+                                    "screen-vault"
+                                );
+
                                 /*
-                                 * Ask Android to request
-                                 * deletion of selected
-                                 * original files.
+                                 * Ask Android to remove
+                                 * the selected originals.
                                  */
+
                                 if (
-                                    window.VaultAndroid &&
+                                    added > 0 &&
                                     window.VaultAndroid
-                                        .requestMoveToVault
                                 ) {
 
-                                    window.VaultAndroid
-                                        .requestMoveToVault();
+                                    setTimeout(
+                                        function () {
+
+                                            if (
+                                                confirm(
+                                                    "Photos copied to Private Vault.\n\nDo you want Android to ask for permission to remove the original photos from Gallery?"
+                                                )
+                                            ) {
+
+                                                window.VaultAndroid
+                                                    .requestMoveToVault();
+                                            }
+
+                                        },
+                                        300
+                                    );
                                 }
                             }
                         }
@@ -899,7 +686,6 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-
     function readPhoto(
         file,
         finished
@@ -908,278 +694,87 @@ document.addEventListener("DOMContentLoaded", function () {
         if (
             !file ||
             !file.type ||
-            file.type.indexOf(
-                "image/"
-            ) !== 0
+            file.type.indexOf("image/") !== 0
         ) {
 
-            finished();
-
+            finished(null);
             return;
         }
-
 
         var reader =
             new FileReader();
 
-
         reader.onload =
             function () {
 
-                photos.push({
+                var data =
+                    reader.result;
 
-                    data:
-                        reader.result,
+                var androidPath = "";
 
-                    name:
-                        file.name ||
-                        "photo.jpg",
-
-                    addedAt:
-                        Date.now()
-                });
-
-
-                finished();
-            };
-
-
-        reader.onerror =
-            function () {
-
-                finished();
-            };
-
-
-        reader.readAsDataURL(
-            file
-        );
-    }
-
-
-    /* ==============================
-       DELETE FROM VAULT
-    ============================== */
-
-    function deletePrivatePhoto(
-        index
-    ) {
-
-        if (
-            index < 0 ||
-            index >= photos.length
-        ) {
-            return;
-        }
-
-
-        var photo =
-            photos[index];
-
-
-        if (
-            photo &&
-            photo.androidPath &&
-            window.VaultAndroid &&
-            window.VaultAndroid
-                .deleteVaultPhoto
-        ) {
-
-            window.VaultAndroid
-                .deleteVaultPhoto(
-                    photo.androidPath
-                );
-        }
-
-
-        photos.splice(
-            index,
-            1
-        );
-
-
-        savePhotos();
-
-
-        renderVault();
-
-
-        showScreen(
-            "screen-vault"
-        );
-    }
-
-
-    /* ==============================
-       RESTORE TO GALLERY
-    ============================== */
-
-    var restoreButton =
-        get("btn-restore");
-
-
-    if (restoreButton) {
-
-        restoreButton.addEventListener(
-            "click",
-            function () {
-
-                var index =
-                    window.selectedPhotoIndex;
-
-
-                if (
-                    typeof index !==
-                    "number"
-                ) {
-
-                    return;
-                }
-
-
-                if (
-                    index < 0 ||
-                    index >= photos.length
-                ) {
-
-                    return;
-                }
-
-
-                var photo =
-                    photos[index];
-
-
-                if (
-                    !photo ||
-                    !photo.data
-                ) {
-
-                    alert(
-                        "Photo could not be restored."
-                    );
-
-                    return;
-                }
-
+                /*
+                 * Make a private Android copy.
+                 */
 
                 if (
                     window.VaultAndroid &&
                     window.VaultAndroid
-                        .restorePhoto
+                        .savePrivatePhoto
                 ) {
 
-                    var result =
-                        window.VaultAndroid
-                            .restorePhoto(
-                                photo.data,
-                                photo.name ||
-                                "restored_photo.jpg"
-                            );
+                    try {
 
+                        androidPath =
+                            window.VaultAndroid
+                                .savePrivatePhoto(
+                                    data,
+                                    file.name
+                                );
 
-                    if (
-                        result === "OK"
-                    ) {
+                    } catch (e) {
 
-                        alert(
-                            "Photo restored to Gallery."
-                        );
-
-                    } else {
-
-                        alert(
-                            "Could not restore the photo."
-                        );
+                        androidPath = "";
                     }
-
-                } else {
-
-                    alert(
-                        "Restore is unavailable in this APK."
-                    );
                 }
-            }
-        );
-    }
 
+                finished({
+                    data: data,
+                    name: file.name,
+                    androidPath: androidPath
+                });
+            };
 
-    /* ==============================
-       DELETE VIEWED PHOTO
-    ============================== */
-
-    var deleteViewedButton =
-        get("btn-delete-photo");
-
-
-    if (deleteViewedButton) {
-
-        deleteViewedButton.addEventListener(
-            "click",
+        reader.onerror =
             function () {
+                finished(null);
+            };
 
-                var index =
-                    window.selectedPhotoIndex;
-
-
-                if (
-                    typeof index !==
-                    "number"
-                ) {
-                    return;
-                }
-
-
-                if (
-                    !confirm(
-                        "Delete this photo from the Private Vault?"
-                    )
-                ) {
-                    return;
-                }
-
-
-                deletePrivatePhoto(
-                    index
-                );
-
-
-                window.selectedPhotoIndex =
-                    null;
-            }
-        );
+        reader.readAsDataURL(file);
     }
 
-
-    /* ==============================
+    /* =========================
        LOCK
-    ============================== */
+    ========================= */
 
     var lockButton =
         get("btn-lock");
-
 
     if (lockButton) {
 
         lockButton.addEventListener(
             "click",
             function () {
-
-                showScreen(
-                    "screen-calculator"
-                );
+                showScreen("screen-calculator");
             }
         );
     }
 
-
-    /* ==============================
+    /* =========================
        CHANGE PIN
-    ============================== */
+    ========================= */
 
     var changePinButton =
         get("btn-change-pin");
-
 
     if (changePinButton) {
 
@@ -1199,23 +794,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 var message =
                     get("cp-msg");
 
-
-                if (oldField) {
-                    oldField.value = "";
-                }
-
-                if (newField) {
-                    newField.value = "";
-                }
-
-                if (confirmField) {
-                    confirmField.value = "";
-                }
-
-                if (message) {
-                    message.textContent = "";
-                }
-
+                if (oldField) oldField.value = "";
+                if (newField) newField.value = "";
+                if (confirmField) confirmField.value = "";
+                if (message) message.textContent = "";
 
                 showScreen(
                     "screen-changepin"
@@ -1224,10 +806,8 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-
     var savePinButton =
         get("btn-save-pin");
-
 
     if (savePinButton) {
 
@@ -1247,7 +827,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 var message =
                     get("cp-msg");
 
-
                 if (
                     !oldField ||
                     !newField ||
@@ -1256,7 +835,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 ) {
                     return;
                 }
-
 
                 var oldPin =
                     oldField.value;
@@ -1267,17 +845,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 var confirmPin =
                     confirmField.value;
 
-
-                if (
-                    oldPin !== savedPin
-                ) {
+                if (oldPin !== savedPin) {
 
                     message.textContent =
                         "❌ CURRENT PIN IS WRONG";
 
                     return;
                 }
-
 
                 if (
                     !/^[0-9]{4,}$/.test(
@@ -1291,7 +865,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-
                 if (
                     newPin !== confirmPin
                 ) {
@@ -1302,21 +875,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-
                 savedPin =
                     newPin;
-
 
                 localStorage.setItem(
                     PIN_KEY,
                     savedPin
                 );
 
-
                 oldField.value = "";
                 newField.value = "";
                 confirmField.value = "";
-
 
                 message.textContent =
                     "✅ PIN CHANGED SUCCESSFULLY";
@@ -1324,14 +893,8 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-
-    /* ==============================
-       BACK BUTTONS
-    ============================== */
-
     var backVault =
         get("btn-back-vault");
-
 
     if (backVault) {
 
@@ -1339,19 +902,21 @@ document.addEventListener("DOMContentLoaded", function () {
             "click",
             function () {
 
+                renderVault();
+
                 showScreen(
                     "screen-vault"
                 );
-
-                renderVault();
             }
         );
     }
 
+    /* =========================
+       PHOTO BACK
+    ========================= */
 
     var photoBack =
         get("btn-photo-back");
-
 
     if (photoBack) {
 
@@ -1362,124 +927,109 @@ document.addEventListener("DOMContentLoaded", function () {
                 var full =
                     get("photo-full");
 
-
                 if (full) {
                     full.src = "";
                 }
 
+                renderVault();
 
                 showScreen(
                     "screen-vault"
                 );
-
-
-                renderVault();
             }
         );
     }
 
-
-    /* ==============================
-       ANDROID BACK
-    ============================== */
+    /* =========================
+       ANDROID BACK SUPPORT
+    ========================= */
 
     window.handleAndroidBack =
         function () {
 
-            var current =
-                window.currentScreen;
+            var screens = [
+                "screen-calculator",
+                "screen-history",
+                "screen-login",
+                "screen-vault",
+                "screen-changepin",
+                "screen-photo"
+            ];
 
+            var current = "";
+
+            for (
+                var i = 0;
+                i < screens.length;
+                i++
+            ) {
+
+                var el =
+                    get(screens[i]);
+
+                if (
+                    el &&
+                    !el.classList.contains("hidden")
+                ) {
+
+                    current = screens[i];
+                    break;
+                }
+            }
 
             if (
-                current ===
-                "screen-photo"
+                current === "screen-history" ||
+                current === "screen-login"
+            ) {
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+            if (
+                current === "screen-vault" ||
+                current === "screen-changepin"
+            ) {
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+            if (
+                current === "screen-photo"
             ) {
 
                 var full =
                     get("photo-full");
 
-
                 if (full) {
                     full.src = "";
                 }
 
+                renderVault();
 
                 showScreen(
                     "screen-vault"
                 );
 
-
                 return;
             }
-
-
-            if (
-                current ===
-                "screen-changepin"
-            ) {
-
-                showScreen(
-                    "screen-vault"
-                );
-
-
-                return;
-            }
-
-
-            if (
-                current ===
-                "screen-vault"
-            ) {
-
-                showScreen(
-                    "screen-calculator"
-                );
-
-
-                return;
-            }
-
-
-            if (
-                current ===
-                "screen-login"
-            ) {
-
-                showScreen(
-                    "screen-calculator"
-                );
-
-
-                return;
-            }
-
-
-            if (
-                current ===
-                "screen-history"
-            ) {
-
-                showScreen(
-                    "screen-calculator"
-                );
-
-
-                return;
-            }
-
 
             /*
-             * Calculator is the home screen.
-             * Do not finish the Android Activity
-             * from JavaScript.
+             * Already on calculator.
+             * Do NOT finish the app here.
              */
         };
 
-
-    /* ==============================
+    /* =========================
        START
-    ============================== */
+    ========================= */
 
     updateDisplay();
 
