@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CalcVault</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- CALCULATOR -->
+    <section id="screen-calculator" class="screen">
+      <h1 class="title">🧮&nbsp;CALCULATOR</h1>
+      <div id="display" class="display">0</div>
+      <div class="keys">
+        <button class="key num" data-k="7">7</button>
+        <button class="key num" data-k="8">8</button>
+        <button class="key num" data-k="9">9</button>
+        <button class="key op" data-k="÷">÷</button>
+        <button class="key num" data-k="4">4</button>
+        <button class="key num" data-k="5">5</button>
+        <button class="key num" data-k="6">6</button>
+        <button class="key op" data-k="×">×</button>
+        <button class="key num" data-k="1">1</button>
+        <button class="key num" data-k="2">2</button>
+        <button class="key num" data-k="3">3</button>
+        <button class="key op" data-k="-">−</button>
+        <button class="key num wide" data-k="0">0</button>
+        <button class="key num" data-k=".">.</button>
+        <button class="key eq" data-k="=">=</button>
+        <button class="key op" data-k="+">+</button>
+        <button class="key clr wide" data-k="C">C</button>
+        <button class="key clr wide" data-k="⌫">⌫</button>
+      </div>
+      <button id="btn-history" class="action orange">📜&nbsp;HISTORY</button>
+      <button id="btn-vault" class="action blue">🔐&nbsp;PRIVATE VAULT</button>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="screen-history" class="screen hidden">
+      <h1 class="title">📜&nbsp;CALCULATION HISTORY</h1>
+      <div id="history-list" class="history-list"></div>
+      <button id="btn-clear-history" class="action red">🗑️&nbsp;CLEAR HISTORY</button>
+      <button id="btn-back-calc" class="action blue">←&nbsp;BACK TO CALCULATOR</button>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="screen-login" class="screen hidden">
+      <h1 class="title">🔐&nbsp;PRIVATE VAULT</h1>
+      <input id="pin-input" class="text" type="password" inputmode="numeric" placeholder="Enter PIN" maxlength="12" />
+      <button id="btn-open" class="action green">🔓&nbsp;OPEN VAULT</button>
+      <button id="btn-back-login" class="action blue">←&nbsp;BACK TO CALCULATOR</button>
+      <p id="login-msg" class="message"></p>
+    </section>
+
+    <!-- VAULT -->
+    <section id="screen-vault" class="screen hidden">
+      <div class="vault-header">
+        <h1 class="title">🔐&nbsp;PRIVATE VAULT</h1>
+        <button id="btn-lock" class="lock">🔒&nbsp;LOCK</button>
+      </div>
+      <div id="vault-grid" class="vault-grid"></div>
+      <button id="btn-add" class="action green">📸&nbsp;ADD PHOTO</button>
+      <button id="btn-change-pin" class="action purple">⚙️&nbsp;CHANGE PIN</button>
+    </section>
+
+    <!-- CHANGE PIN -->
+    <section id="screen-changepin" class="screen hidden">
+      <h1 class="title">⚙️&nbsp;CHANGE PIN</h1>
+      <input id="cp-old" class="text" type="password" inputmode="numeric" placeholder="Current PIN" maxlength="12" />
+      <input id="cp-new" class="text" type="password" inputmode="numeric" placeholder="New PIN" maxlength="12" />
+      <input id="cp-confirm" class="text" type="password" inputmode="numeric" placeholder="Confirm New PIN" maxlength="12" />
+      <button id="btn-save-pin" class="action green">💾&nbsp;SAVE NEW PIN</button>
+      <button id="btn-back-vault" class="action blue">←&nbsp;BACK</button>
+      <p id="cp-msg" class="message"></p>
+    </section>
+
+    <!-- PHOTO VIEW -->
+    <section id="screen-photo" class="screen hidden">
+      <h1 class="title">🖼️&nbsp;PHOTO VIEW</h1>
+      <div class="photo-stage"><img id="photo-full" alt="photo" /></div>
+      <button id="btn-photo-back" class="action blue">←&nbsp;BACK TO VAULT</button>
+    </section>
+
+    <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
