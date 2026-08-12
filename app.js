@@ -522,4 +522,801 @@ document.addEventListener("DOMContentLoaded", function () {
     function createPhotoCard(
         photo,
         index
-   
+    ) {
+
+        var grid =
+            get("vault-grid");
+
+        if (!grid) {
+            return;
+        }
+
+        var card =
+            document.createElement("div");
+
+        card.className =
+            "photo-card";
+
+
+        var image =
+            document.createElement("img");
+
+        image.src =
+            photo.data;
+
+        image.alt =
+            "Private photo";
+
+
+        image.addEventListener(
+            "click",
+            function () {
+
+                var full =
+                    get("photo-full");
+
+                if (full) {
+                    full.src =
+                        photo.data;
+                }
+
+                showScreen(
+                    "screen-photo"
+                );
+            }
+        );
+
+        card.appendChild(
+            image
+        );
+
+
+        /* RESTORE */
+
+        var restoreButton =
+            document.createElement("button");
+
+        restoreButton.className =
+            "photo-restore";
+
+        restoreButton.textContent =
+            "RESTORE";
+
+        restoreButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (
+                    !photo.androidPath
+                ) {
+
+                    alert(
+                        "This photo cannot be restored because its private copy is missing."
+                    );
+
+                    return;
+                }
+
+                if (
+                    !window.VaultAndroid ||
+                    !window.VaultAndroid.restorePrivatePhoto
+                ) {
+
+                    alert(
+                        "Restore is unavailable on this build."
+                    );
+
+                    return;
+                }
+
+                var ok =
+                    confirm(
+                        "Restore this photo to your Gallery?"
+                    );
+
+                if (!ok) {
+                    return;
+                }
+
+                var result = "";
+
+                try {
+
+                    result =
+                        window.VaultAndroid
+                            .restorePrivatePhoto(
+                                photo.androidPath,
+                                photo.name || "restored_photo.jpg"
+                            );
+
+                } catch (e) {
+
+                    result = "";
+                }
+
+                if (result === "OK") {
+
+                    try {
+
+                        if (
+                            window.VaultAndroid &&
+                            window.VaultAndroid
+                                .deleteVaultPhoto
+                        ) {
+
+                            window.VaultAndroid
+                                .deleteVaultPhoto(
+                                    photo.androidPath
+                                );
+                        }
+
+                    } catch (e) {
+                    }
+
+                    photos.splice(
+                        index,
+                        1
+                    );
+
+                    savePhotos();
+
+                    renderVault();
+
+                    alert(
+                        "✅ Photo restored to Gallery."
+                    );
+
+                } else {
+
+                    alert(
+                        "❌ Could not restore the photo."
+                    );
+                }
+            }
+        );
+
+        card.appendChild(
+            restoreButton
+        );
+
+
+        /* DELETE */
+
+        var deleteButton =
+            document.createElement("button");
+
+        deleteButton.className =
+            "photo-delete";
+
+        deleteButton.textContent =
+            "DELETE";
+
+        deleteButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (
+                    confirm(
+                        "Permanently delete this private photo?"
+                    )
+                ) {
+
+                    if (
+                        window.VaultAndroid &&
+                        photo.androidPath
+                    ) {
+
+                        try {
+
+                            window.VaultAndroid
+                                .deleteVaultPhoto(
+                                    photo.androidPath
+                                );
+
+                        } catch (e) {
+                        }
+                    }
+
+                    photos.splice(
+                        index,
+                        1
+                    );
+
+                    savePhotos();
+
+                    renderVault();
+                }
+            }
+        );
+
+        card.appendChild(
+            deleteButton
+        );
+
+        grid.appendChild(
+            card
+        );
+    }
+
+
+    /* =========================
+       ADD MULTIPLE PHOTOS
+    ========================= */
+
+    var addPhotoButton =
+        get("btn-add");
+
+    var fileInput =
+        get("file-input");
+
+    if (fileInput) {
+
+        fileInput.setAttribute(
+            "multiple",
+            "multiple"
+        );
+
+        fileInput.setAttribute(
+            "accept",
+            "image/*"
+        );
+    }
+
+    if (addPhotoButton) {
+
+        addPhotoButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                if (!fileInput) {
+
+                    alert(
+                        "Photo picker unavailable."
+                    );
+
+                    return;
+                }
+
+                fileInput.value = "";
+
+                fileInput.click();
+            }
+        );
+    }
+
+    if (fileInput) {
+
+        fileInput.addEventListener(
+            "change",
+            function () {
+
+                var files =
+                    this.files;
+
+                if (
+                    !files ||
+                    files.length === 0
+                ) {
+                    return;
+                }
+
+                var total =
+                    files.length;
+
+                var completed =
+                    0;
+
+                var added =
+                    0;
+
+                for (
+                    var i = 0;
+                    i < total;
+                    i++
+                ) {
+
+                    readPhoto(
+                        files[i],
+                        function (photo) {
+
+                            completed++;
+
+                            if (photo) {
+
+                                photos.push(
+                                    photo
+                                );
+
+                                added++;
+                            }
+
+                            if (
+                                completed ===
+                                total
+                            ) {
+
+                                savePhotos();
+
+                                renderVault();
+
+                                showScreen(
+                                    "screen-vault"
+                                );
+
+                                /*
+                                 * Ask permission to remove
+                                 * the selected originals.
+                                 */
+
+                                if (
+                                    added > 0 &&
+                                    window.VaultAndroid &&
+                                    window.VaultAndroid
+                                        .requestMoveToVault
+                                ) {
+
+                                    setTimeout(
+                                        function () {
+
+                                            var answer =
+                                                confirm(
+                                                    "Photos copied to Private Vault.\n\nDo you want to remove the original photos from Gallery?"
+                                                );
+
+                                            if (answer) {
+
+                                                window.VaultAndroid
+                                                    .requestMoveToVault();
+                                            }
+
+                                        },
+                                        300
+                                    );
+                                }
+                            }
+                        }
+                    );
+                }
+            }
+        );
+    }
+
+
+    function readPhoto(
+        file,
+        finished
+    ) {
+
+        if (
+            !file ||
+            !file.type ||
+            file.type.indexOf("image/") !== 0
+        ) {
+
+            finished(null);
+            return;
+        }
+
+        var reader =
+            new FileReader();
+
+        reader.onload =
+            function () {
+
+                var data =
+                    reader.result;
+
+                var androidPath =
+                    "";
+
+                if (
+                    window.VaultAndroid &&
+                    window.VaultAndroid
+                        .savePrivatePhoto
+                ) {
+
+                    try {
+
+                        androidPath =
+                            window.VaultAndroid
+                                .savePrivatePhoto(
+                                    data,
+                                    file.name
+                                );
+
+                    } catch (e) {
+
+                        androidPath = "";
+                    }
+                }
+
+                if (!androidPath) {
+
+                    finished(null);
+                    return;
+                }
+
+                finished({
+                    data: data,
+                    name: file.name,
+                    androidPath: androidPath
+                });
+            };
+
+        reader.onerror =
+            function () {
+                finished(null);
+            };
+
+        reader.readAsDataURL(
+            file
+        );
+    }
+
+
+    /* =========================
+       LOCK
+    ========================= */
+
+    var lockButton =
+        get("btn-lock");
+
+    if (lockButton) {
+
+        lockButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                showScreen(
+                    "screen-calculator"
+                );
+            }
+        );
+    }
+
+
+    /* =========================
+       CHANGE PIN
+    ========================= */
+
+    var changePinButton =
+        get("btn-change-pin");
+
+    if (changePinButton) {
+
+        changePinButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                var oldField =
+                    get("cp-old");
+
+                var newField =
+                    get("cp-new");
+
+                var confirmField =
+                    get("cp-confirm");
+
+                var message =
+                    get("cp-msg");
+
+                if (oldField) {
+                    oldField.value = "";
+                }
+
+                if (newField) {
+                    newField.value = "";
+                }
+
+                if (confirmField) {
+                    confirmField.value = "";
+                }
+
+                if (message) {
+                    message.textContent = "";
+                }
+
+                showScreen(
+                    "screen-changepin"
+                );
+            }
+        );
+    }
+
+
+    var savePinButton =
+        get("btn-save-pin");
+
+    if (savePinButton) {
+
+        savePinButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+
+                var oldField =
+                    get("cp-old");
+
+                var newField =
+                    get("cp-new");
+
+                var confirmField =
+                    get("cp-confirm");
+
+                var message =
+                    get("cp-msg");
+
+                if (
+                    !oldField ||
+                    !newField ||
+                    !confirmField ||
+                    !message
+                ) {
+                    return;
+                }
+
+                var oldPin =
+                    oldField.value;
+
+                var newPin =
+                    newField.value;
+
+                var confirmPin =
+                    confirmField.value;
+
+                if (
+                    oldPin !== savedPin
+                ) {
+
+                    message.textContent =
+                        "❌ CURRENT PIN IS WRONG";
+
+                    return;
+                }
+
+                if (
+                    !/^[0-9]{4,}$/.test(
+                        newPin
+                    )
+                ) {
+
+                    message.textContent =
+                        "❌ NEW PIN MUST BE 4+ DIGITS";
+
+                    return;
+                }
+
+                if (
+                    newPin !== confirmPin
+                ) {
+
+                    message.textContent =
+                        "❌ NEW PINS DON'T MATCH";
+
+                    return;
+                }
+
+                savedPin =
+                    newPin;
+
+                localStorage.setItem(
+                    PIN_KEY,
+                    savedPin
+                );
+
+                oldField.value = "";
+                newField.value = "";
+                confirmField.value = "";
+
+                message.textContent =
+                    "✅ PIN CHANGED SUCCESSFULLY";
+            }
+        );
+    }
+
+
+    /* =========================
+       CHANGE PIN BACK
+       ========================= */
+
+    var backVault =
+        get("btn-back-vault");
+
+    if (backVault) {
+
+        backVault.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                renderVault();
+
+                showScreen(
+                    "screen-vault"
+                );
+            }
+        );
+    }
+
+
+    /* =========================
+       PHOTO BACK
+    ========================= */
+
+    var photoBack =
+        get("btn-photo-back");
+
+    if (photoBack) {
+
+        photoBack.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                var full =
+                    get("photo-full");
+
+                if (full) {
+                    full.src = "";
+                }
+
+                renderVault();
+
+                showScreen(
+                    "screen-vault"
+                );
+            }
+        );
+    }
+
+
+    /* =========================
+       ANDROID BACK
+    ========================= */
+
+    window.handleAndroidBack =
+        function () {
+
+            var screens = [
+                "screen-calculator",
+                "screen-history",
+                "screen-login",
+                "screen-vault",
+                "screen-changepin",
+                "screen-photo"
+            ];
+
+            var current =
+                "screen-calculator";
+
+            for (
+                var i = 0;
+                i < screens.length;
+                i++
+            ) {
+
+                var el =
+                    get(screens[i]);
+
+                if (
+                    el &&
+                    !el.classList.contains(
+                        "hidden"
+                    )
+                ) {
+
+                    current =
+                        screens[i];
+
+                    break;
+                }
+            }
+
+            if (
+                current ===
+                "screen-history"
+            ) {
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+            if (
+                current ===
+                "screen-login"
+            ) {
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+            if (
+                current ===
+                "screen-vault"
+            ) {
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+            if (
+                current ===
+                "screen-changepin"
+            ) {
+
+                showScreen(
+                    "screen-vault"
+                );
+
+                renderVault();
+
+                return;
+            }
+
+            if (
+                current ===
+                "screen-photo"
+            ) {
+
+                var full =
+                    get("photo-full");
+
+                if (full) {
+                    full.src = "";
+                }
+
+                renderVault();
+
+                showScreen(
+                    "screen-vault"
+                );
+
+                return;
+            }
+
+            /*
+             * Calculator पर Android Back दबाने पर
+             * app को बंद नहीं करेंगे.
+             */
+        };
+
+
+    /* =========================
+       START
+    ========================= */
+
+    updateDisplay();
+
+    renderVault();
+
+    showScreen(
+        "screen-calculator"
+    );
+
+});
