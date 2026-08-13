@@ -8,27 +8,63 @@ document.addEventListener("DOMContentLoaded", function () {
        SCREEN NAVIGATION
     ========================= */
 
-    function showScreen(id) {
+    var screens = [
+        "screen-calculator",
+        "screen-history",
+        "screen-login",
+        "screen-vault",
+        "screen-changepin",
+        "screen-photo"
+    ];
 
-        var screens = [
-            "screen-calculator",
-            "screen-history",
-            "screen-login",
-            "screen-vault",
-            "screen-changepin",
-            "screen-photo"
-        ];
+    function showScreen(id) {
 
         for (var i = 0; i < screens.length; i++) {
 
             var el = get(screens[i]);
 
-            if (el) {
-                if (screens[i] === id) {
-                    el.classList.remove("hidden");
-                } else {
-                    el.classList.add("hidden");
-                }
+            if (!el) continue;
+
+            if (screens[i] === id) {
+                el.classList.remove("hidden");
+            } else {
+                el.classList.add("hidden");
+            }
+        }
+
+        /*
+         * Photo screen पर बड़े RESTORE और DELETE
+         * buttons बिल्कुल नहीं रहने देंगे.
+         */
+        if (id === "screen-photo") {
+            removeLargePhotoButtons();
+        }
+    }
+
+
+    function removeLargePhotoButtons() {
+
+        var photoScreen =
+            get("screen-photo");
+
+        if (!photoScreen) return;
+
+        var buttons =
+            photoScreen.querySelectorAll("button");
+
+        for (var i = 0; i < buttons.length; i++) {
+
+            var text =
+                (buttons[i].textContent || "")
+                    .trim()
+                    .toUpperCase();
+
+            if (
+                text.indexOf("RESTORE") !== -1 ||
+                text.indexOf("DELETE") !== -1
+            ) {
+
+                buttons[i].remove();
             }
         }
     }
@@ -39,16 +75,23 @@ document.addEventListener("DOMContentLoaded", function () {
     ========================= */
 
     var display = get("display");
+
     var expression = "";
+
     var history = [];
+
 
     function updateDisplay() {
 
         if (display) {
+
             display.textContent =
-                expression === "" ? "0" : expression;
+                expression === ""
+                    ? "0"
+                    : expression;
         }
     }
+
 
     function addToCalculator(value) {
 
@@ -57,20 +100,27 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         expression += value;
+
         updateDisplay();
     }
+
 
     function clearCalculator() {
 
         expression = "";
+
         updateDisplay();
     }
+
 
     function deleteLast() {
 
         if (expression === "ERROR") {
+
             expression = "";
+
         } else {
+
             expression =
                 expression.substring(
                     0,
@@ -81,48 +131,70 @@ document.addEventListener("DOMContentLoaded", function () {
         updateDisplay();
     }
 
+
     function calculateResult() {
 
-        if (!expression || expression === "ERROR") {
+        if (
+            !expression ||
+            expression === "ERROR"
+        ) {
             return;
         }
 
-        var original = expression;
+        var original =
+            expression;
 
-        var math = expression
-            .replace(/×/g, "*")
-            .replace(/÷/g, "/")
-            .replace(/−/g, "-");
+        var math =
+            expression
+                .replace(/×/g, "*")
+                .replace(/÷/g, "/")
+                .replace(/−/g, "-");
 
-        if (!/^[0-9+\-*/(). ]+$/.test(math)) {
+
+        if (
+            !/^[0-9+\-*/(). ]+$/.test(math)
+        ) {
 
             expression = "ERROR";
+
             updateDisplay();
 
             return;
         }
 
+
         try {
 
             var result =
                 Function(
-                    "return (" + math + ")"
+                    "return (" +
+                    math +
+                    ")"
                 )();
+
 
             if (!isFinite(result)) {
                 throw new Error();
             }
 
+
             history.push(
-                original + " = " + result
+                original +
+                " = " +
+                result
             );
 
-            expression = String(result);
+
+            expression =
+                String(result);
+
 
         } catch (e) {
 
-            expression = "ERROR";
+            expression =
+                "ERROR";
         }
+
 
         updateDisplay();
     }
@@ -131,35 +203,50 @@ document.addEventListener("DOMContentLoaded", function () {
     var calculatorButtons =
         document.querySelectorAll(".key");
 
+
     for (
         var i = 0;
         i < calculatorButtons.length;
         i++
     ) {
 
-        calculatorButtons[i].addEventListener(
-            "click",
-            function (event) {
+        calculatorButtons[i]
+            .addEventListener(
+                "click",
+                function (event) {
 
-                event.preventDefault();
+                    event.preventDefault();
 
-                var value =
-                    this.getAttribute("data-k");
+                    var value =
+                        this.getAttribute(
+                            "data-k"
+                        );
 
-                if (value === "C") {
-                    clearCalculator();
+
+                    if (value === "C") {
+
+                        clearCalculator();
+
+                    } else if (
+                        value === "⌫"
+                    ) {
+
+                        deleteLast();
+
+                    } else if (
+                        value === "="
+                    ) {
+
+                        calculateResult();
+
+                    } else {
+
+                        addToCalculator(
+                            value
+                        );
+                    }
                 }
-                else if (value === "⌫") {
-                    deleteLast();
-                }
-                else if (value === "=") {
-                    calculateResult();
-                }
-                else {
-                    addToCalculator(value);
-                }
-            }
-        );
+            );
     }
 
 
@@ -176,6 +263,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var clearHistoryButton =
         get("btn-clear-history");
 
+
     if (historyButton) {
 
         historyButton.addEventListener(
@@ -188,10 +276,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     historyList.innerHTML = "";
 
+
                     if (history.length === 0) {
 
                         var empty =
-                            document.createElement("div");
+                            document.createElement(
+                                "div"
+                            );
 
                         empty.className =
                             "history-item";
@@ -199,7 +290,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         empty.textContent =
                             "No calculations yet.";
 
-                        historyList.appendChild(empty);
+                        historyList.appendChild(
+                            empty
+                        );
+
 
                     } else {
 
@@ -211,7 +305,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         ) {
 
                             var item =
-                                document.createElement("div");
+                                document.createElement(
+                                    "div"
+                                );
 
                             item.className =
                                 "history-item";
@@ -219,12 +315,17 @@ document.addEventListener("DOMContentLoaded", function () {
                             item.textContent =
                                 history[h];
 
-                            historyList.appendChild(item);
+                            historyList.appendChild(
+                                item
+                            );
                         }
                     }
                 }
 
-                showScreen("screen-history");
+
+                showScreen(
+                    "screen-history"
+                );
             }
         );
     }
@@ -251,6 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var backCalculator =
         get("btn-back-calc");
 
+
     if (backCalculator) {
 
         backCalculator.addEventListener(
@@ -275,8 +377,12 @@ document.addEventListener("DOMContentLoaded", function () {
     var PIN_KEY =
         "vault_calc_user_pin";
 
+
     var savedPin =
-        localStorage.getItem(PIN_KEY) || "";
+        localStorage.getItem(
+            PIN_KEY
+        ) || "";
+
 
     var vaultButton =
         get("btn-vault");
@@ -293,11 +399,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function preparePinScreen() {
 
-        if (!pinInput || !openButton) {
+        if (
+            !pinInput ||
+            !openButton
+        ) {
             return;
         }
 
+
         pinInput.value = "";
+
 
         if (savedPin === "") {
 
@@ -307,11 +418,13 @@ document.addEventListener("DOMContentLoaded", function () {
             openButton.textContent =
                 "🔐 CREATE PIN";
 
+
             if (loginMessage) {
 
                 loginMessage.textContent =
                     "Create a PIN with at least 4 digits.";
             }
+
 
         } else {
 
@@ -321,10 +434,12 @@ document.addEventListener("DOMContentLoaded", function () {
             openButton.textContent =
                 "🔓 OPEN VAULT";
 
+
             if (loginMessage) {
                 loginMessage.textContent = "";
             }
         }
+
 
         showScreen(
             "screen-login"
@@ -352,12 +467,18 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+
         var entered =
             pinInput.value;
 
+
         if (savedPin === "") {
 
-            if (!/^[0-9]{4,}$/.test(entered)) {
+            if (
+                !/^[0-9]{4,}$/.test(
+                    entered
+                )
+            ) {
 
                 if (loginMessage) {
 
@@ -368,12 +489,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            savedPin = entered;
+
+            savedPin =
+                entered;
+
 
             localStorage.setItem(
                 PIN_KEY,
                 savedPin
             );
+
 
             pinInput.value = "";
 
@@ -387,7 +512,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-        if (entered === savedPin) {
+        if (
+            entered === savedPin
+        ) {
 
             pinInput.value = "";
 
@@ -430,7 +557,9 @@ document.addEventListener("DOMContentLoaded", function () {
             "keydown",
             function (event) {
 
-                if (event.key === "Enter") {
+                if (
+                    event.key === "Enter"
+                ) {
 
                     event.preventDefault();
 
@@ -445,6 +574,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var backLogin =
         get("btn-back-login");
+
 
     if (backLogin) {
 
@@ -470,7 +600,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var PHOTOS_KEY =
         "vault_calc_private_photos";
 
+
     var photos = [];
+
 
     try {
 
@@ -479,13 +611,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 PHOTOS_KEY
             );
 
+
         if (stored) {
-            photos = JSON.parse(stored);
+
+            photos =
+                JSON.parse(stored);
         }
 
+
         if (!Array.isArray(photos)) {
+
             photos = [];
         }
+
 
     } catch (e) {
 
@@ -520,16 +658,21 @@ document.addEventListener("DOMContentLoaded", function () {
         var grid =
             get("vault-grid");
 
+
         if (!grid) {
             return;
         }
 
+
         grid.innerHTML = "";
+
 
         if (photos.length === 0) {
 
             var empty =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
             empty.className =
                 "photo-empty";
@@ -537,7 +680,9 @@ document.addEventListener("DOMContentLoaded", function () {
             empty.textContent =
                 "No private photos yet.";
 
-            grid.appendChild(empty);
+            grid.appendChild(
+                empty
+            );
 
             return;
         }
@@ -569,19 +714,26 @@ document.addEventListener("DOMContentLoaded", function () {
         var grid =
             get("vault-grid");
 
+
         if (!grid) {
             return;
         }
 
+
         var card =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         card.className =
             "photo-card";
 
 
         var image =
-            document.createElement("img");
+            document.createElement(
+                "img"
+            );
+
 
         image.src =
             photo.data;
@@ -595,30 +747,49 @@ document.addEventListener("DOMContentLoaded", function () {
             function (event) {
 
                 event.preventDefault();
+                event.stopPropagation();
+
 
                 var full =
                     get("photo-full");
 
+
                 if (full) {
+
                     full.src =
                         photo.data;
                 }
 
+
+                /*
+                 * Full photo screen:
+                 * no large Restore/Delete.
+                 */
+
                 showScreen(
                     "screen-photo"
                 );
+
+
+                removeLargePhotoButtons();
             }
         );
 
-        card.appendChild(image);
+
+        card.appendChild(
+            image
+        );
 
 
         /* =========================
-           RESTORE
-        ========================= */
+           SMALL RESTORE BUTTON
+           ========================= */
 
         var restoreButton =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
+
 
         restoreButton.type =
             "button";
@@ -638,7 +809,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.stopPropagation();
 
 
-                if (!photo.androidPath) {
+                if (
+                    !photo.androidPath
+                ) {
 
                     alert(
                         "This photo cannot be restored because its private copy is missing."
@@ -667,12 +840,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         "Restore this photo to your Gallery?"
                     );
 
+
                 if (!ok) {
                     return;
                 }
 
 
                 var result = "";
+
 
                 try {
 
@@ -694,10 +869,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     try {
 
-                        window.VaultAndroid
-                            .deleteVaultPhoto(
-                                photo.androidPath
-                            );
+                        if (
+                            window.VaultAndroid &&
+                            window.VaultAndroid
+                                .deleteVaultPhoto
+                        ) {
+
+                            window.VaultAndroid
+                                .deleteVaultPhoto(
+                                    photo.androidPath
+                                );
+                        }
 
                     } catch (e) {
                     }
@@ -708,18 +890,21 @@ document.addEventListener("DOMContentLoaded", function () {
                         1
                     );
 
+
                     savePhotos();
 
                     renderVault();
+
 
                     alert(
                         "✅ Photo restored to Gallery."
                     );
 
+
                 } else {
 
                     alert(
-                        "❌ Could not restore the photo."
+                        "❌ Could not restore this photo."
                     );
                 }
             }
@@ -732,11 +917,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         /* =========================
-           DELETE
-        ========================= */
+           SMALL DELETE BUTTON
+           ========================= */
 
         var deleteButton =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
+
 
         deleteButton.type =
             "button";
@@ -757,37 +945,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (
-                    confirm(
+                    !confirm(
                         "Permanently delete this private photo?"
                     )
                 ) {
-
-                    if (
-                        window.VaultAndroid &&
-                        photo.androidPath
-                    ) {
-
-                        try {
-
-                            window.VaultAndroid
-                                .deleteVaultPhoto(
-                                    photo.androidPath
-                                );
-
-                        } catch (e) {
-                        }
-                    }
-
-
-                    photos.splice(
-                        index,
-                        1
-                    );
-
-                    savePhotos();
-
-                    renderVault();
+                    return;
                 }
+
+
+                if (
+                    window.VaultAndroid &&
+                    photo.androidPath
+                ) {
+
+                    try {
+
+                        window.VaultAndroid
+                            .deleteVaultPhoto(
+                                photo.androidPath
+                            );
+
+                    } catch (e) {
+                    }
+                }
+
+
+                photos.splice(
+                    index,
+                    1
+                );
+
+
+                savePhotos();
+
+                renderVault();
             }
         );
 
@@ -796,7 +987,10 @@ document.addEventListener("DOMContentLoaded", function () {
             deleteButton
         );
 
-        grid.appendChild(card);
+
+        grid.appendChild(
+            card
+        );
     }
 
 
@@ -833,6 +1027,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 event.preventDefault();
 
+
                 if (!fileInput) {
 
                     alert(
@@ -841,6 +1036,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     return;
                 }
+
 
                 fileInput.value = "";
 
@@ -858,6 +1054,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 var files =
                     this.files;
+
 
                 if (
                     !files ||
@@ -927,6 +1124,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                                     "Photos copied to Private Vault.\n\nDo you want to remove the original photos from Gallery?"
                                                 );
 
+
                                             if (answer) {
 
                                                 window.VaultAndroid
@@ -954,7 +1152,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (
             !file ||
             !file.type ||
-            file.type.indexOf("image/") !== 0
+            file.type.indexOf(
+                "image/"
+            ) !== 0
         ) {
 
             finished(null);
@@ -1026,7 +1226,9 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
 
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(
+            file
+        );
     }
 
 
@@ -1036,6 +1238,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var lockButton =
         get("btn-lock");
+
 
     if (lockButton) {
 
@@ -1060,6 +1263,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var changePinButton =
         get("btn-change-pin");
 
+
     if (changePinButton) {
 
         changePinButton.addEventListener(
@@ -1067,6 +1271,8 @@ document.addEventListener("DOMContentLoaded", function () {
             function (event) {
 
                 event.preventDefault();
+                event.stopPropagation();
+
 
                 var oldField =
                     get("cp-old");
@@ -1117,6 +1323,7 @@ document.addEventListener("DOMContentLoaded", function () {
             function (event) {
 
                 event.preventDefault();
+
 
                 var oldField =
                     get("cp-old");
@@ -1189,6 +1396,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 savedPin =
                     newPin;
 
+
                 localStorage.setItem(
                     PIN_KEY,
                     savedPin
@@ -1209,7 +1417,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* =========================
        CHANGE PIN BACK
-    ========================= */
+       ========================= */
+
+    function goBackToVault(event) {
+
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        renderVault();
+
+        showScreen(
+            "screen-vault"
+        );
+    }
+
 
     var backVault =
         get("btn-back-vault");
@@ -1219,24 +1442,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         backVault.addEventListener(
             "click",
-            function (event) {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                renderVault();
-
-                showScreen(
-                    "screen-vault"
-                );
-            }
+            goBackToVault
         );
     }
 
 
     /* =========================
        PHOTO BACK
-    ========================= */
+       ========================= */
 
     var photoBack =
         get("btn-photo-back");
@@ -1255,6 +1468,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 var full =
                     get("photo-full");
 
+
                 if (full) {
                     full.src = "";
                 }
@@ -1271,21 +1485,97 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =========================
+       EXTRA BACK SAFETY
+    ========================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            var target =
+                event.target;
+
+
+            if (!target) {
+                return;
+            }
+
+
+            var id =
+                target.id || "";
+
+
+            if (
+                id === "btn-back-vault"
+            ) {
+
+                goBackToVault(event);
+
+                return;
+            }
+
+
+            if (
+                id === "btn-back-calc"
+            ) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+
+            if (
+                id === "btn-back-login"
+            ) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                showScreen(
+                    "screen-calculator"
+                );
+
+                return;
+            }
+
+
+            if (
+                id === "btn-photo-back"
+            ) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                var full =
+                    get("photo-full");
+
+                if (full) {
+                    full.src = "";
+                }
+
+                renderVault();
+
+                showScreen(
+                    "screen-vault"
+                );
+            }
+        },
+        true
+    );
+
+
+    /* =========================
        ANDROID BACK
     ========================= */
 
     window.handleAndroidBack =
         function () {
-
-            var screens = [
-                "screen-calculator",
-                "screen-history",
-                "screen-login",
-                "screen-vault",
-                "screen-changepin",
-                "screen-photo"
-            ];
-
 
             var current =
                 "screen-calculator";
@@ -1378,9 +1668,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 var full =
                     get("photo-full");
 
+
                 if (full) {
                     full.src = "";
                 }
+
 
                 renderVault();
 
